@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미술교과 기반 지역연계 학교예술교육 워크숍</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Soft Neutrals & Creative Accents -->
+    <!-- Application Structure Plan: A 120-minute workshop timeline structure. The user navigates through sections corresponding to the training schedule: Introduction (icebreaker), Understanding (case studies), Practice (interactive lesson planner), and Wrap-up (sharing & resources). This task-oriented flow is more effective for a hands-on training session than a generic report layout, guiding teachers through the learning and creation process step-by-step. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Workshop Agenda -> Goal: Organize -> Viz/Presentation Method: Top navigation bar acting as a progress tracker -> Interaction: Click to navigate to a section -> Justification: Provides clear structure and allows easy movement within the workshop flow.
+        - Report Info: Case Studies -> Goal: Inform/Compare -> Viz/Presentation Method: Interactive cards with hover/click effects -> Interaction: Click to reveal detailed information for each case -> Justification: Makes exploring diverse examples engaging and prevents information overload. Library/Method: HTML/CSS/JS.
+        - Report Info: Lesson Design Guidelines -> Goal: Inform/Guide -> Viz/Presentation Method: A multi-step interactive "Lesson Plan Builder" with input fields and guiding questions -> Interaction: Users type their ideas directly into the fields, and AI suggestions are provided. -> Justification: Facilitates active lesson planning with AI assistance. Library/Method: HTML/CSS/JS.
+        - Report Info: Case Study Types -> Goal: Inform -> Viz/Presentation Method: A simple doughnut chart -> Interaction: Hover to see details -> Justification: Provides a quick visual summary of the different models of community partnership. Library/Method: Chart.js/Canvas.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F9F9F7;
+            color: #333333;
+        }
+        .section-card {
+            background-color: #FFFFFF;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #EDEDED;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+        }
+        .nav-button.active {
+            color: #4A90E2;
+            border-bottom-color: #4A90E2;
+        }
+        .nav-button:hover {
+            color: #4A90E2;
+            background-color: #F0F5FA;
+        }
+        .pill-button {
+            transition: all 0.3s ease;
+        }
+        .case-card {
+            perspective: 1000px;
+        }
+        .case-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .case-card.flipped .case-card-inner {
+            transform: rotateY(180deg);
+        }
+        .case-card-front, .case-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .case-card-front {
+            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            color: #334155;
+        }
+        .case-card-back {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            transform: rotateY(180deg);
+            overflow-y: auto;
+            align-items: flex-start;
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+            cursor: pointer; /* Make it clickable */
+        }
+        .step-indicator.active {
+            background-color: #4A90E2;
+            color: white;
+            transform: scale(1.1);
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4A90E2;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-[#F9F9F7]">
+
+    <div class="container mx-auto px-4 py-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">미술교과 기반 지역연계 학교예술교육</h1>
+            <p class="text-lg text-gray-500 mt-4">초등 교원을 위한 실습 중심 워크숍</p>
+        </header>
+
+        <!-- API 키 설정 섹션 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="section-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">🔑 AI 기능 설정</h3>
+                    <button id="api-toggle-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        설정하기
+                    </button>
+                </div>
+                
+                <div id="api-setup-section" class="hidden">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                        <h4 class="font-bold text-blue-800 mb-2">📋 Gemini API 키 발급 방법</h4>
+                        <ol class="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline hover:text-blue-900">Google AI Studio</a>에 접속하세요</li>
+                            <li>"Create API Key" 버튼을 클릭합니다</li>
+                            <li>생성된 API 키를 복사하여 아래 입력란에 붙여넣으세요</li>
+                            <li>API 키는 브라우저에만 저장되며 외부로 전송되지 않습니다</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <input 
+                            type="password" 
+                            id="api-key-input" 
+                            class="flex-1 form-input" 
+                            placeholder="Gemini API 키를 입력하세요 (예: AIzaSy...)"
+                        >
+                        <button id="api-key-save-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
+                            저장
+                        </button>
+                        <button id="api-key-clear-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">
+                            삭제
+                        </button>
+                    </div>
+                    
+                    <div id="api-status" class="mt-3 text-sm">
+                        <span id="api-status-text" class="text-gray-600">API 키가 설정되지 않았습니다. AI 추천 기능을 사용하려면 API 키를 입력해주세요.</span>
+                    </div>
+                </div>
+                
+                <div id="api-configured-section" class="hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-green-600">✅</span>
+                            <span class="text-green-700 font-medium">AI 기능이 활성화되었습니다</span>
+                        </div>
+                        <button id="api-reconfigure-btn" class="text-sm text-gray-600 hover:text-gray-800">
+                            재설정
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sticky top-0 bg-white/80 backdrop-blur-sm z-10 shadow-sm rounded-lg mb-12">
+            <div class="max-w-5xl mx-auto px-4">
+                <div class="flex justify-center space-x-2 md:space-x-8">
+                    <button data-target="intro" class="nav-button active font-semibold py-4 px-2 md:px-4 text-sm md:text-base">⏰ 연수 시작</button>
+                    <button data-target="cases" class="nav-button font-semibold py-4 px-2 md:px-4 text-sm md:text-base">🎨 사례 탐구</button>
+                    <button data-target="workshop" class="nav-button font-semibold py-4 px-2 md:px-4 text-sm md:text-base">💡 수업 설계</button>
+                    <button data-target="wrapup" class="nav-button font-semibold py-4 px-2 md:px-4 text-sm md:text-base">📝 정리 및 공유</button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="content-container">
+            <section id="intro" class="content-section">
+                <div class="max-w-4xl mx-auto section-card p-8 md:p-12">
+                    <h2 class="text-3xl font-bold mb-6 text-gray-800">🚀 함께 시작하기: 우리 동네 보물찾기</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        안녕하세요, 선생님! 이번 연수에 오신 것을 환영합니다. 이 시간은 이론 학습을 넘어, 선생님께서 직접 '지역사회'라는 살아있는 교육 자원을 활용하여 학생들을 위한 특별한 미술 수업을 기획하는 실습의 장입니다. 딱딱한 강의가 아닌, 동료 교사들과 함께 아이디어를 나누고 실제적인 결과물을 만들어가는 의미 있는 시간이 될 것입니다.
+                    </p>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-r-lg mb-8">
+                        <h3 class="font-bold text-xl mb-2 text-blue-800">오늘의 연수 목표</h3>
+                        <ul class="list-disc list-inside text-blue-700 space-y-2">
+                            <li>지역연계 예술교육의 개념과 가치를 이해합니다.</li>
+                            <li>다양한 성공 사례를 통해 아이디어를 얻습니다.</li>
+                            <li>나만의 지역연계 미술 수업을 직접 설계하고 구체화합니다.</li>
+                        </ul>
+                    </div>
+                    
+                    <h3 class="font-bold text-2xl mb-4 text-gray-700">ICE-BREAKING: 우리 학교 1km 반경에는?</h3>
+                    <p class="text-gray-600 mb-6">수업 설계를 시작하기 전, 잠시 우리 학교 주변을 떠올려볼까요? 학교에서 걸어갈 수 있는 거리 안에 학생들과 함께 탐색하고, 배우고, 영감을 얻을 수 있는 '보물'이 숨어있을지 모릅니다. 아래 키워드를 보며 생각나는 장소나 인물, 이야기를 자유롭게 떠올려보세요.</p>
+                    <div class="flex flex-wrap gap-4 text-center">
+                        <span class="bg-yellow-100 text-yellow-800 text-base font-medium px-4 py-2 rounded-full">🌳 공원/숲</span>
+                        <span class="bg-green-100 text-green-800 text-base font-medium px-4 py-2 rounded-full">🏛️ 작은 박물관/미술관</span>
+                        <span class="bg-indigo-100 text-indigo-800 text-base font-medium px-4 py-2 rounded-full">시장/상점가</span>
+                        <span class="bg-purple-100 text-purple-800 text-base font-medium px-4 py-2 rounded-full">🧑‍🎨 지역 예술가/장인</span>
+                        <span class="bg-pink-100 text-pink-800 text-base font-medium px-4 py-2 rounded-full">📜 오래된 건물/역사 유적</span>
+                        <span class="bg-gray-200 text-gray-800 text-base font-medium px-4 py-2 rounded-full">🏢 공공기관 (주민센터, 도서관)</span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cases" class="content-section hidden">
+                 <div class="max-w-5xl mx-auto section-card p-8 md:p-12">
+                    <h2 class="text-3xl font-bold mb-2 text-gray-800">🌍 가능성의 발견: 지역연계 교육 사례 탐구</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        '지역연계 수업'이 막연하게 느껴지시나요? 이미 전국의 많은 학교에서 지역사회의 특성을 살린 창의적인 미술 교육을 실천하고 있습니다. 여기서는 몇 가지 대표적인 사례 유형을 소개해 드립니다. 각 카드를 클릭하여 자세한 내용을 살펴보시고, 우리 학교, 우리 지역에 적용할 수 있는 아이디어의 실마리를 찾아보세요.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8 mb-12">
+                        <div class="chart-container relative h-[300px] md:h-auto md:max-h-[400px]">
+                             <canvas id="caseTypeChart"></canvas>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                             <h3 class="font-bold text-2xl mb-4 text-gray-700">사례 유형 분석</h3>
+                             <p class="text-gray-600">지역연계 수업은 다양한 형태로 이루어집니다. '공공미술 프로젝트'처럼 학생들이 직접 지역 환경 개선에 참여하는 형태가 가장 많으며, '장소 탐방'이나 '전문가 협력' 수업도 활발히 이루어지고 있습니다. 이는 학교 밖의 살아있는 자원을 활용하려는 노력이 다방면으로 시도되고 있음을 보여줍니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="case-card h-64 cursor-pointer">
+                            <div class="case-card-inner">
+                                <div class="case-card-front">
+                                    <h3 class="text-2xl font-bold">공공미술 프로젝트</h3>
+                                    <p class="mt-2">우리 동네를 캔버스로!</p>
+                                    <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
+                                </div>
+                                <div class="case-card-back text-left">
+                                    <h4 class="font-bold text-lg mb-2">마을 벽화 그리기</h4>
+                                    <p class="text-sm text-gray-600"><strong>- 대상:</strong> 5~6학년<br><strong>- 연계자원:</strong> 지역 주민센터, 노후 담벼락<br><strong>- 활동:</strong> 우리 동네 이야기 리서치 → 디자인 시안 제작 및 발표 → 주민 의견 수렴 → 함께 벽화 제작<br><strong>- 성과:</strong> 환경 개선, 공동체 의식 함양</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="case-card h-64 cursor-pointer">
+                            <div class="case-card-inner">
+                                <div class="case-card-front">
+                                    <h3 class="text-2xl font-bold">장소 탐방 & 재해석</h3>
+                                    <p class="mt-2">익숙한 공간, 새롭게 보기</p>
+                                    <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
+                                </div>
+                                <div class="case-card-back text-left">
+                                    <h4 class="font-bold text-lg mb-2">전통시장 드로잉</h4>
+                                    <p class="text-sm text-gray-600"><strong>- 대상:</strong> 3~4학년<br><strong>- 연계자원:</strong> 지역 전통시장<br><strong>- 활동:</strong> 시장 방문하여 오감으로 관찰하기 → 상인 인터뷰 및 사진 촬영 → 가장 인상 깊은 모습 드로잉/콜라주로 표현 → '우리 시장 전시회' 개최<br><strong>- 성과:</strong> 관찰력, 표현력, 지역 경제 이해</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="case-card h-64 cursor-pointer">
+                            <div class="case-card-inner">
+                                <div class="case-card-front">
+                                    <h3 class="text-2xl font-bold">전문가 협력 수업</h3>
+                                    <p class="mt-2">마을 장인에게 한 수 배우기</p>
+                                    <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
+                                </div>
+                                <div class="case-card-back text-left">
+                                    <h4 class="font-bold text-lg mb-2">도예가와 함께하는 컵 만들기</h4>
+                                    <p class="text-sm text-gray-600"><strong>- 대상:</strong> 전학년<br><strong>- 연계자원:</strong> 지역 도예 공방 작가<br><strong>- 활동:</strong> 작가 초빙하여 직업 이야기 듣기 → 흙의 성질 탐구 → 1인 1컵 디자인 및 제작 → 가마 소성 후 작품 감상<br><strong>- 성과:</strong> 진로 탐색, 조형 능력, 재료 이해</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- New Case Study 1 -->
+                        <div class="case-card h-64 cursor-pointer">
+                            <div class="case-card-inner">
+                                <div class="case-card-front">
+                                    <h3 class="text-2xl font-bold">지역 문화유산 재해석</h3>
+                                    <p class="mt-2">우리 지역의 숨겨진 이야기, 예술로 되살리기</p>
+                                    <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
+                                </div>
+                                <div class="case-card-back text-left">
+                                    <h4 class="font-bold text-lg mb-2">역사 속 인물 조형물 제작</h4>
+                                    <p class="text-sm text-gray-600"><strong>- 대상:</strong> 4~6학년<br><strong>- 연계자원:</strong> 지역 향토사료관, 문화유산 해설사<br><strong>- 활동:</strong> 지역 문화유산 조사 및 답사 → 역사적 의미 탐구 → 현대적 재해석을 통한 조형물/미디어아트 제작 → 문화유산 현장에 설치 및 전시<br><strong>- 성과:</strong> 지역 역사 이해, 창의적 재해석 능력, 문화유산 보존 인식</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- New Case Study 2 -->
+                        <div class="case-card h-64 cursor-pointer">
+                            <div class="case-card-inner">
+                                <div class="case-card-front">
+                                    <h3 class="2xl font-bold">생태 미술 프로젝트</h3>
+                                    <p class="mt-2">자연과 함께하는 예술, 환경을 지키는 미술</p>
+                                    <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
+                                </div>
+                                <div class="case-card-back text-left">
+                                    <h4 class="font-bold text-lg mb-2">폐품 활용 환경 설치미술</h4>
+                                    <p class="text-sm text-gray-600"><strong>- 대상:</strong> 3~5학년<br><strong>- 연계자원:</strong> 지역 환경 단체, 공원 관리 사무소<br><strong>- 활동:</strong> 지역 생태 환경 조사 → 환경 문제 인식 및 토론 → 자연물/폐품을 활용한 설치미술/정크아트 제작 → 환경 캠페인 및 전시<br><strong>- 성과:</strong> 환경 감수성 함양, 문제 해결 능력, 공동체 의식</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="workshop" class="content-section hidden">
+                <div class="max-w-4xl mx-auto section-card p-8 md:p-12">
+                    <h2 class="text-3xl font-bold mb-2 text-gray-800">🛠️ 나만의 수업 설계하기</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                       이제 본격적으로 선생님만의 지역연계 미술 수업을 구상할 시간입니다. 아래 4가지 단계를 따라가며 빈칸을 채워보세요. 정답은 없습니다. 자유롭게 아이디어를 기록하고 구체화하는 과정 자체가 중요합니다. 이 활동을 통해 연수가 끝날 때쯤, 선생님 손에는 멋진 수업 계획안의 초안이 들려있을 것입니다.
+                    </p>
+
+                    <div class="flex justify-around mb-8">
+                        <div id="step-indicator-0" class="step-indicator w-16 h-16 flex items-center justify-center rounded-full border-2 border-gray-300">1단계</div>
+                        <div id="step-indicator-1" class="step-indicator w-16 h-16 flex items-center justify-center rounded-full border-2 border-gray-300">2단계</div>
+                        <div id="step-indicator-2" class="step-indicator w-16 h-16 flex items-center justify-center rounded-full border-2 border-gray-300">3단계</div>
+                        <div id="step-indicator-3" class="step-indicator w-16 h-16 flex items-center justify-center rounded-full border-2 border-gray-300">4단계</div>
+                    </div>
+                    
+                    <div id="workshop-step-0" class="workshop-step">
+                        <h3 class="font-bold text-2xl mb-4 text-gray-700">1단계: 우리 동네 자원 탐색</h3>
+                        <p class="text-gray-600 mb-6">우리 학교 주변에서 미술 수업과 연결할 수 있는 인적, 물적 자원은 무엇이 있을까요? (예: 행복 주민센터 옥상 텃밭, 학교 옆 공방 도예가, 우리 동네 지명의 유래가 담긴 설화)</p>
+                        <div class="mb-4">
+                            <label for="grade-select-step1" class="block text-gray-700 text-sm font-bold mb-2">학년 선택:</label>
+                            <select id="grade-select-step1" class="form-input">
+                                <option value="">학년을 선택하세요</option>
+                                <option value="1-2학년">1-2학년</option>
+                                <option value="3-4학년">3-4학년</option>
+                                <option value="5-6학년">5-6학년</option>
+                            </select>
+                        </div>
+                        <textarea id="resource-input" class="form-input" rows="4" placeholder="자유롭게 기록해보세요..."></textarea>
+                        <button id="suggest-ideas-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                            <span id="suggest-ideas-spinner" class="hidden loading-spinner mr-2"></span>
+                            ✨ 아이디어 제안 받기
+                        </button>
+                        <div id="suggested-ideas-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+                        <div class="mt-6 flex justify-end">
+                            <button class="next-step-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">다음 단계로</button>
+                        </div>
+                    </div>
+
+                    <div id="workshop-step-1" class="workshop-step hidden">
+                         <h3 class="font-bold text-2xl mb-4 text-gray-700">2단계: 교육과정 연결 및 주제 정하기</h3>
+                        <div class="mb-4">
+                            <label for="grade-select" class="block text-gray-700 text-sm font-bold mb-2">학년 선택:</label>
+                            <select id="grade-select" class="form-input">
+                                <option value="">학년을 선택하세요</option>
+                                <option value="1-2학년">1-2학년</option>
+                                <option value="3-4학년">3-4학년</option>
+                                <option value="5-6학년">5-6학년</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">선택된 동네 자원:</label>
+                            <p id="selected-resource-display" class="form-input bg-gray-100 text-gray-600"></p>
+                        </div>
+
+                        <!-- TASTE Competencies Checkboxes -->
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">핵심 역량:</label>
+                            <p class="text-gray-500 text-xs mb-2">수업을 통해 함양하고자 하는 역량을 선택하세요.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="taste-competency" value="심미적 감성 역량" class="form-checkbox h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">심미적 감성 역량</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="taste-competency" value="시각적 소통 역량" class="form-checkbox h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">시각적 소통 역량</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="taste-competency" value="창의∙융합 역량" class="form-checkbox h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">창의∙융합 역량</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="taste-competency" value="정체성 역량" class="form-checkbox h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">정체성 역량</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="taste-competency" value="공동체 역량" class="form-checkbox h-4 w-4 text-blue-600">
+                                    <span class="ml-2 text-gray-700">공동체 역량</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div class="topic-objective-pair">
+                                <label for="curriculum-input" class="block text-gray-700 text-sm font-bold mb-2">학습 주제:</label>
+                                <textarea id="curriculum-input" class="form-input" rows="2" placeholder="수업 주제를 기록해보세요..."></textarea>
+                                <button id="expand-topic-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                                    <span id="expand-topic-spinner" class="loading-spinner hidden mr-2"></span>
+                                    ✨ 학습 주제 확장
+                                </button>
+                                <div id="expanded-topic-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+                                
+                                <label for="learning-objectives-input" class="block text-gray-700 text-sm font-bold mb-2 mt-4">학습 목표:</label>
+                                <p class="text-gray-500 text-xs mb-2">미술과 교육과정의 '내용 체계 및 성취기준'을 참고하여 구체적인 학습 목표를 작성해보세요.</p>
+                                <textarea id="learning-objectives-input" class="form-input" rows="4" placeholder="학습 목표를 구체적으로 작성해보세요..."></textarea>
+                                <div class="flex justify-between items-center mt-4">
+                                    <button id="suggest-objectives-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                                        <span id="suggest-objectives-spinner" class="loading-spinner hidden mr-2"></span>
+                                        ✨ 학습 목표 제안 받기
+                                    </button>
+                                    <a href="https://notebooklm.google.com/notebook/fdb22972-091a-42b6-bf37-54aeb1da1d09?_gl=1*7b1u6q*_ga*MTc0NDM3NTc2My4xNzQ4NDkxOTQy*_ga_W0LDH41ZCB*czE3NDg0OTE5NDEkbzEkZzAkdDE3NDg0OTE5NDUkajYwJGwwJGgw&original_referer=https:%2F%2Fnotebooklm.google%23&pli=1" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg text-center flex-shrink-0">2022개정교육과정 챗봇</a>
+                                </div>
+                                <div id="suggested-objectives-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+                            </div>
+                        </div>
+
+                         <div class="mt-6 flex justify-between">
+                            <button class="prev-step-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">이전 단계로</button>
+                            <button class="next-step-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">다음 단계로</button>
+                        </div>
+                    </div>
+
+                    <div id="workshop-step-2" class="workshop-step hidden">
+                        <h3 class="font-bold text-2xl mb-4 text-gray-700">3단계: 활동 내용 구체화 (120분 기준)</h3>
+                        <p class="text-gray-600 mb-6">수업의 흐름을 '도입-전개-정리'로 나누어 구체적인 활동을 설계해보세요. 학생들의 흥미를 어떻게 유발하고, 핵심 활동은 무엇이며, 마무리는 어떻게 할까요?</p>
+                        
+                        <!-- Activity content fields for the single topic -->
+                        <div class="space-y-4">
+                            <textarea id="activity-intro" class="form-input" rows="2" placeholder="도입 (흥미 유발, 동기 부여 활동...)"></textarea>
+                            <div id="main-activities-container">
+                                <!-- Dynamic '전개' textareas will be added here by JS -->
+                            </div>
+                            <button id="add-main-activity-btn" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1 px-3 rounded-lg text-sm">전개 칸 추가</button>
+
+                            <textarea id="activity-wrapup" class="form-input mt-4" rows="2" placeholder="정리 (작품 공유, 느낀 점 나누기, 차시 예고...)"></textarea>
+                        </div>
+
+                        <!-- New: Expand Learning Activity Button and Output -->
+                        <button id="expand-learning-activity-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                            <span id="expand-learning-activity-spinner" class="hidden loading-spinner mr-2"></span>
+                            ✨ 학습 활동 확장
+                        </button>
+                        <div id="expanded-learning-activity-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+
+                        <!-- Resource Table -->
+                        <h4 class="font-bold text-xl mt-8 mb-4 text-gray-700">활용할 자원</h4>
+                        <p class="text-gray-600 mb-4">수업에 활용할 자원을 기록하거나 AI 추천을 받아보세요. 모든 칸을 채울 필요는 없습니다.</p>
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border p-2 text-left">자원 유형</th>
+                                    <th class="border p-2 text-left">활용할 자원과 방법</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="border p-2">인적 자원</td>
+                                    <td class="border p-2"><textarea id="resource-human" class="form-input h-20" placeholder="예: 지역 예술가, 장인"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2">물적 자원</td>
+                                    <td class="border p-2"><textarea id="resource-material" class="form-input h-20" placeholder="예: 공원, 전통시장"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2">정보, 문화 자원</td>
+                                    <td class="border p-2"><textarea id="resource-info-culture" class="form-input h-20" placeholder="예: 지역 역사 자료, 설화"></textarea></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button id="suggest-resources-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                            <span id="suggest-resources-spinner" class="hidden loading-spinner mr-2"></span>
+                            ✨ 자원 추천 받기
+                        </button>
+                        <div id="suggested-resources-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+                        
+                        <!-- Experience after resources -->
+                        <h4 class="font-bold text-xl mt-8 mb-4 text-gray-700">체험 활동</h4>
+                        <p class="text-gray-600 mb-4">외부 체험 활동 아이디어를 기록하거나 AI 추천을 받아보세요.</p>
+                        <textarea id="recorded-experience-input" class="form-input mt-4" rows="4" placeholder="추천받은 체험 활동 아이디어를 기록하거나 수정해보세요..."></textarea>
+                        <button id="expand-experience-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                            <span id="expand-experience-spinner" class="hidden loading-spinner mr-2"></span>
+                            ✨ 체험 활동 확장
+                        </button>
+                        <div id="expanded-experience-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+
+                        <div class="mt-6 flex justify-between">
+                             <button class="prev-step-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">이전 단계로</button>
+                            <button class="next-step-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">다음 단계로</button>
+                        </div>
+                    </div>
+
+                    <div id="workshop-step-3" class="workshop-step hidden">
+                        <h3 class="font-bold text-2xl mb-4 text-gray-700">4단계: 기대 효과 및 확장 방안</h3>
+                        <div class="mb-4">
+                            <label for="effect-input" class="block text-gray-700 text-sm font-bold mb-2">기대 효과:</label>
+                            <textarea id="effect-input" class="form-input" rows="4" placeholder="이 수업의 기대효과를 기록해보세요..." required></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="expansion-plan-input" class="block text-gray-700 text-sm font-bold mb-2">확장 방안:</label>
+                            <textarea id="expansion-plan-input" class="form-input" rows="4" placeholder="수업의 확장 방안을 기록해보세요..."></textarea>
+                            <button id="suggest-expansion-plan-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                                <span id="suggest-expansion-plan-spinner" class="hidden loading-spinner mr-2"></span>
+                                ✨ 수업의 확장 방안 추천
+                            </button>
+                            <div id="suggested-expansion-plan-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
+                        </div>
+                        <div class="mt-6 flex justify-between">
+                             <button class="prev-step-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">이전 단계로</button>
+                             <button id="finish-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg">수업 설계 완료!</button>
+                        </div>
+                    </div>
+                    
+                    <div id="summary-view" class="hidden mt-8 bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-2xl font-bold text-center mb-6">🎉 나만의 수업 계획안 초안이 완성되었습니다!</h3>
+                        <div class="space-y-4 text-gray-700">
+                             <p><strong>학년:</strong> <span id="summary-grade"></span></p>
+                             <p><strong>동네 자원:</strong> <span id="summary-resource"></span></p>
+                             <p><strong>학습 주제:</strong> <span id="summary-curriculum"></span></p>
+                             <p><strong>학습 목표:</strong> <span id="summary-objectives"></span></p>
+                             <p><strong>핵심 역량:</strong> <span id="summary-taste-competencies"></span></p>
+                             <p><strong>주요 활동 (도입):</strong> <span id="summary-activity-intro"></span></p>
+                             <p><strong>주요 활동 (전개):</strong> <span id="summary-activity-main"></span></p>
+                             <p><strong>주요 활동 (정리):</strong> <span id="summary-activity-wrapup"></span></p>
+                             <p><strong>활용할 자원:</strong> <span id="summary-resource-table"></span></p>
+                             <p><strong>체험 활동:</strong> <span id="summary-experience"></span></p>
+                             <p><strong>기대 효과:</strong> <span id="summary-effect"></span></p>
+                             <p><strong>확장 방안:</strong> <span id="summary-expansion-plan"></span></p>
+                        </div>
+                        <p class="text-center mt-6 text-sm text-gray-500">잠시 후 동료 선생님들과 이 내용을 바탕으로 자유롭게 이야기를 나눠보겠습니다.</p>
+                        <div class="mt-6 flex justify-center space-x-4">
+                            <button id="reset-app-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">초기화</button>
+                            <button id="save-to-google-drive-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                                계획서 Google 문서로 저장하기
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="wrapup" class="content-section hidden">
+                <div class="max-w-4xl mx-auto section-card p-8 md:p-12">
+                    <h2 class="text-3xl font-bold mb-6 text-gray-800">🌱 아이디어 공유 및 마무리</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        모두 수고하셨습니다. 짧은 시간이지만 선생님들께서 만들어주신 수업 계획의 초안들은 정말 소중한 결과물입니다. 이제 동료 선생님들과 자유롭게 아이디어를 공유하며 서로에게 영감을 주는 시간을 갖겠습니다. 이후에는 연수를 마무리하며 자주 묻는 질문에 답해드리고, 앞으로 활용하실 수 있는 추가 자료를 안내해 드립니다.
+                    </p>
+                    
+                    <div class="bg-green-50 border-l-4 border-green-400 p-6 rounded-r-lg mb-8">
+                        <h3 class="font-bold text-xl mb-2 text-green-800">토의 주제</h3>
+                        <ul class="list-disc list-inside text-green-700 space-y-2">
+                            <li>가장 인상 깊었던 동료 선생님의 수업 아이디어는 무엇인가요?</li>
+                            <li>수업을 실행할 때 예상되는 어려움과 해결 방안은 무엇일까요?</li>
+                            <li>우리 지역의 숨겨진 예술 자원에는 또 무엇이 있을까요?</li>
+                            <li>디지털 매체를 활용한 미술 수업 아이디어를 더 발전시키려면?</li>
+                            <li>학생들의 예술적 감수성을 높이기 위한 교사의 역할은?</li>
+                        </ul>
+                    </div>
+
+                    <h3 class="font-bold text-2xl mb-4 text-gray-700">자주 묻는 질문 (FAQ)</h3>
+                    <div class="space-y-4">
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>지역의 예술가나 전문가 섭외는 어떻게 하나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>가장 좋은 방법은 지역 문화재단이나 교육청의 예술교육 지원 플랫폼을 활용하는 것입니다. '학교예술강사 지원사업' 등을 통해 검증된 전문가를 연결해 주기도 합니다. 직접 연락할 경우, 정중한 공문과 함께 구체적인 활동 계획, 소정의 강사료 계획을 전달하는 것이 좋습니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>안전 문제가 걱정돼요. 현장 체험 시 유의할 점은?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>가장 중요한 것은 '사전 답사'입니다. 교사가 먼저 현장을 방문하여 위험 요소를 파악하고 동선을 계획해야 합니다. 또한, 학교 안전 공제회 규정을 반드시 확인하고, 필요 시 학부모 동의서와 안전 교육을 철저히 실시해야 합니다. 참여 인원이 많을 경우 학부모나 안전 도우미의 협조를 구하는 것도 좋은 방법입니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>지역연계 수업의 교육과정 연계는 어떻게 하나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>미술과 교육과정의 '미적 체험', '표현', '감상' 영역별 성취기준을 확인하고, 지역 자원과 연계하여 달성할 수 있는 목표를 설정합니다. 다른 교과(예: 사회, 국어)와의 융합을 통해 더욱 풍성한 학습 경험을 제공할 수도 있습니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>학생들의 참여를 높이는 효과적인 방법은 무엇인가요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>학생들의 흥미와 관심사를 반영한 주제를 선정하고, 주도적으로 탐색하고 표현할 수 있는 기회를 제공하는 것이 중요합니다. 프로젝트 학습, 토의/토론, 역할극 등 다양한 활동 중심의 수업 방식을 활용해보세요.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>지역연계 수업 시 예산 확보는 어떻게 하나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>교육청의 학교 예술교육 지원 사업, 지역 문화재단의 공모 사업, 지방자치단체의 교육 협력 사업 등 다양한 외부 지원 사업을 적극적으로 활용할 수 있습니다. 학교 예산 편성 시에도 관련 항목을 포함하는 것이 좋습니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>디지털 매체를 미술 수업에 어떻게 적용할 수 있을까요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>태블릿을 활용한 디지털 드로잉, 사진/영상 편집 앱을 이용한 미디어아트 제작, 가상현실(VR) 기반 미술관 관람, 메타버스 공간에서의 작품 전시 등 다양한 방법으로 디지털 매체를 활용할 수 있습니다. 학생들의 디지털 소양 함양에도 기여합니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>지역사회와의 협력 관계를 지속적으로 유지하는 팁이 있나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>정기적인 소통 채널을 유지하고, 협력 기관의 의견을 적극적으로 수렴하며, 작은 성과라도 함께 공유하고 기념하는 것이 중요합니다. 상호 존중과 신뢰를 바탕으로 장기적인 파트너십을 구축하는 데 집중하세요.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>미술 수업에서 과정 중심 평가를 어떻게 적용하나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>최종 결과물뿐만 아니라 아이디어 구상 단계의 스케치, 활동 참여 태도, 동료와의 협력 과정, 자기 성찰 일지 등을 평가 자료로 활용할 수 있습니다. 관찰 평가, 자기 평가, 동료 평가, 포트폴리오 평가 등 다양한 방법을 혼합하여 학생의 성장을 다각도로 기록합니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>지역연계 수업이 학생들의 진로 교육에 어떤 도움을 줄 수 있나요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>지역 예술가나 전문가와의 만남을 통해 다양한 직업 세계를 간접 경험하고, 실제 예술 활동에 참여하며 자신의 재능과 흥미를 발견할 수 있습니다. 이는 학생들이 예술 분야뿐만 아니라 다양한 분야의 진로를 탐색하는 데 긍정적인 영향을 미칩니다.</p>
+                            </div>
+                        </details>
+                        <details class="group">
+                            <summary class="flex items-center justify-between cursor-pointer p-4 bg-gray-100 rounded-lg font-semibold">
+                                <span>학교 내 유휴 공간을 예술 교육 공간으로 활용하는 아이디어가 있을까요?</span>
+                                <span class="transform transition-transform duration-300 group-open:rotate-180">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white rounded-b-lg border border-t-0">
+                                <p>복도 벽면을 학생 작품 전시 공간으로 활용하거나, 계단이나 운동장 구석에 작은 설치 미술 작품을 제작하여 전시할 수 있습니다. 학교 텃밭을 활용한 자연 미술 활동 공간을 조성하는 것도 좋은 방법입니다. 학생들이 일상 속에서 예술을 접하고 향유할 수 있는 기회를 늘려줍니다.</p>
+                            </div>
+                        </details>
+                    </div>
+
+                    <p class="text-gray-700 mt-8 leading-relaxed text-center text-lg font-semibold">
+                        오늘 연수에 참여해주셔서 진심으로 감사합니다. 선생님들의 열정과 창의적인 아이디어가 우리 아이들의 예술적 성장에 큰 밑거름이 될 것입니다. 앞으로도 지역연계 학교 예술교육에 많은 관심과 참여 부탁드립니다!
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="mt-12 py-6 text-center text-gray-500 text-sm border-t border-gray-200">
+            <p>&copy; Copyright Yang Inseon. All rights reserved.</p>
+            <p class="mt-2">본 코드는 수업 설계 및 활용을 위한 목적으로 제공됩니다. 제작자 정보의 무단 변경 및 코드의 상업적 배포는 삼가 주시기 바랍니다.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // API 키 관리 (메모리에 저장 - 새로고침 시 재입력 필요)
+            let CURRENT_API_KEY = "";
+            
+            // Google Apps Script 웹앱 URL (실제 배포 URL로 교체하세요)
+            const GAS_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+            // API 키 관리 요소들
+            const apiToggleBtn = document.getElementById('api-toggle-btn');
+            const apiSetupSection = document.getElementById('api-setup-section');
+            const apiConfiguredSection = document.getElementById('api-configured-section');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const apiKeySaveBtn = document.getElementById('api-key-save-btn');
+            const apiKeyClearBtn = document.getElementById('api-key-clear-btn');
+            const apiReconfigureBtn = document.getElementById('api-reconfigure-btn');
+            const apiStatusText = document.getElementById('api-status-text');
+
+            // API 키 상태 업데이트 함수
+            function updateApiStatus() {
+                if (CURRENT_API_KEY) {
+                    apiSetupSection.classList.add('hidden');
+                    apiConfiguredSection.classList.remove('hidden');
+                    apiToggleBtn.textContent = '설정됨';
+                    apiToggleBtn.classList.add('text-green-600', 'hover:text-green-800');
+                    apiToggleBtn.classList.remove('text-blue-600', 'hover:text-blue-800');
+                    enableAiFeatures();
+                } else {
+                    apiSetupSection.classList.add('hidden');
+                    apiConfiguredSection.classList.add('hidden');
+                    apiToggleBtn.textContent = '설정하기';
+                    apiToggleBtn.classList.add('text-blue-600', 'hover:text-blue-800');
+                    apiToggleBtn.classList.remove('text-green-600', 'hover:text-green-800');
+                    disableAiFeatures();
+                }
+            }
+
+            // AI 기능 활성화
+            function enableAiFeatures() {
+                const aiButtons = document.querySelectorAll('[id$="-btn"]:not(#api-toggle-btn):not(#api-key-save-btn):not(#api-key-clear-btn):not(#api-reconfigure-btn)');
+                aiButtons.forEach(btn => {
+                    if (btn.textContent.includes('✨')) {
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btn.title = '';
+                    }
+                });
+            }
+
+            // AI 기능 비활성화
+            function disableAiFeatures() {
+                const aiButtons = document.querySelectorAll('[id$="-btn"]:not(#api-toggle-btn):not(#api-key-save-btn):not(#api-key-clear-btn):not(#api-reconfigure-btn)');
+                aiButtons.forEach(btn => {
+                    if (btn.textContent.includes('✨')) {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        btn.title = 'API 키를 먼저 설정해주세요';
+                    }
+                });
+            }
+
+            // API 키 토글 버튼
+            apiToggleBtn.addEventListener('click', () => {
+                if (CURRENT_API_KEY) {
+                    apiConfiguredSection.classList.add('hidden');
+                    apiSetupSection.classList.toggle('hidden');
+                } else {
+                    apiSetupSection.classList.toggle('hidden');
+                }
+            });
+
+            // API 키 저장
+            apiKeySaveBtn.addEventListener('click', () => {
+                const apiKey = apiKeyInput.value.trim();
+                if (apiKey.length < 10) {
+                    apiStatusText.textContent = '올바른 API 키를 입력해주세요.';
+                    apiStatusText.className = 'text-red-600';
+                    return;
+                }
+                
+                CURRENT_API_KEY = apiKey;
+                apiKeyInput.value = '';
+                apiStatusText.textContent = 'API 키가 성공적으로 저장되었습니다!';
+                apiStatusText.className = 'text-green-600';
+                
+                setTimeout(() => {
+                    updateApiStatus();
+                }, 1000);
+            });
+
+            // API 키 삭제
+            apiKeyClearBtn.addEventListener('click', () => {
+                CURRENT_API_KEY = "";
+                apiKeyInput.value = '';
+                apiStatusText.textContent = 'API 키가 삭제되었습니다.';
+                apiStatusText.className = 'text-gray-600';
+                updateApiStatus();
+            });
+
+            // API 키 재설정
+            apiReconfigureBtn.addEventListener('click', () => {
+                apiConfiguredSection.classList.add('hidden');
+                apiSetupSection.classList.remove('hidden');
+                apiKeyInput.focus();
+            });
+
+            // Google Apps Script로 데이터 전송하는 함수
+            async function createGoogleDoc(data) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    return result;
+                } catch (error) {
+                    console.error('Google Apps Script 호출 오류:', error);
+                    return { success: false, message: '네트워크 오류가 발생했습니다.' };
+                }
+            }
+
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            const caseCards = document.querySelectorAll('.case-card');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    contentSections.forEach(section => {
+                        if (section.id === targetId) {
+                            section.classList.remove('hidden');
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    });
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+
+            caseCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('flipped');
+                });
+            });
+            
+            const ctx = document.getElementById('caseTypeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['공공미술 프로젝트', '장소 탐방 & 재해석', '전문가 협력', '지역 문화유산 재해석', '생태 미술 프로젝트'],
+                    datasets: [{
+                        label: '사례 유형',
+                        data: [25, 20, 20, 20, 15], // Updated data for 5 categories
+                        backgroundColor: [
+                            'rgba(74, 144, 226, 0.7)',
+                            'rgba(80, 227, 194, 0.7)',
+                            'rgba(186, 104, 200, 0.7)',
+                            'rgba(255, 159, 64, 0.7)', // New color for new category
+                            'rgba(75, 192, 192, 0.7)'  // New color for new category
+                        ],
+                        borderColor: [
+                            '#4A90E2',
+                            '#50E3C2',
+                            '#BA68C8',
+                            '#FF9F40',
+                            '#4BC0C0'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '지역연계 교육 사례 유형 분포'
+                        }
+                    }
+                }
+            });
+
+            const workshopSteps = document.querySelectorAll('.workshop-step');
+            const stepIndicators = document.querySelectorAll('.step-indicator');
+            const nextButtons = document.querySelectorAll('.next-step-btn');
+            const prevButtons = document.querySelectorAll('.prev-step-btn');
+            let currentStepIndex = 0; // Changed variable name to avoid conflict with `currentStep` in other parts
+
+            // Store activity data for the single topic
+            const activityData = {
+                intro: '',
+                mainActivities: [{ content: '' }], // Array for dynamic '전개' sections
+                wrapup: '',
+                recordedExperience: '',
+                resourceTable: {
+                    human: '',
+                    material: '',
+                    infoCulture: ''
+                },
+                tasteCompetencies: [] // Array to store selected TASTE competencies
+            };
+
+            function updateWorkshopView() {
+                workshopSteps.forEach((step, index) => {
+                    step.classList.toggle('hidden', index !== currentStepIndex);
+                });
+                stepIndicators.forEach((indicator, index) => {
+                    indicator.classList.toggle('active', index === currentStepIndex);
+                });
+
+                // Update resource display in step 2
+                if (currentStepIndex === 1) { // Step 2 is now index 1
+                    const resourceInput = document.getElementById('resource-input'); // Get element here
+                    document.getElementById('selected-resource-display').textContent = resourceInput ? resourceInput.value : '입력된 자원 없음';
+                    loadTasteCompetencies(); // Load TASTE checkboxes when entering step 2
+                }
+                
+                // Load activity content for the single topic in step 3
+                if (currentStepIndex === 2) { // Step 3 is now index 2
+                    // Add a small delay to ensure DOM is fully rendered
+                    setTimeout(() => {
+                        loadActivityContent();
+                        renderMainActivities(); // Render dynamic '전개' sections
+                    }, 50); // 50ms delay
+                }
+            }
+
+            // Step Indicator Navigation
+            stepIndicators.forEach(indicator => {
+                indicator.addEventListener('click', () => {
+                    // Save current activity content before navigating if leaving step 3
+                    if (currentStepIndex === 2) {
+                        saveActivityInputs(); // Save all activity related inputs
+                    }
+                    // Save TASTE competencies before leaving step 2
+                    if (currentStepIndex === 1) {
+                        saveTasteCompetencies();
+                    }
+                    currentStepIndex = parseInt(indicator.id.replace('step-indicator-', '')); // Get index from ID
+                    updateWorkshopView();
+                });
+            });
+
+            nextButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Save current activity content before navigating if leaving step 3
+                    if (currentStepIndex === 2) {
+                        saveActivityInputs(); // Save all activity related inputs
+                    }
+                    // Save TASTE competencies before leaving step 2
+                    if (currentStepIndex === 1) {
+                        saveTasteCompetencies();
+                    }
+                    if (currentStepIndex < workshopSteps.length - 1) {
+                        currentStepIndex++;
+                        updateWorkshopView();
+                    }
+                });
+            });
+
+            prevButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                     // Save current activity content before navigating if leaving step 3
+                    if (currentStepIndex === 2) {
+                        saveActivityInputs(); // Save all activity related inputs
+                    }
+                    // Save TASTE competencies before leaving step 2
+                    if (currentStepIndex === 1) {
+                        saveTasteCompetencies();
+                    }
+                    if (currentStepIndex > 0) {
+                        currentStepIndex--;
+                        updateWorkshopView();
+                    }
+                });
+            });
+            
+            const finishBtn = document.getElementById('finish-btn');
+            const summaryView = document.getElementById('summary-view');
+            const saveToGoogleDriveBtn = document.getElementById('save-to-google-drive-btn');
+            
+            console.log('finishBtn:', finishBtn); // 디버깅용
+            console.log('summaryView:', summaryView); // 디버깅용
+
+            // TASTE Competencies Checkbox handling
+            const tasteCheckboxes = document.querySelectorAll('input[name="taste-competency"]');
+            function saveTasteCompetencies() {
+                activityData.tasteCompetencies = Array.from(tasteCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+            }
+            function loadTasteCompetencies() {
+                tasteCheckboxes.forEach(checkbox => {
+                    checkbox.checked = activityData.tasteCompetencies.includes(checkbox.value);
+                });
+            }
+            tasteCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', saveTasteCompetencies);
+            });
+
+            // Function to generate Google Doc content HTML
+            function generateGoogleDocContent(instructionMessage) {
+                const grade = document.getElementById('grade-select').value || '선택 안 됨';
+                const resource = document.getElementById('resource-input').value || '기록되지 않음';
+                
+                const curriculumInput = document.getElementById('curriculum-input');
+                const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
+                const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
+                
+                // Use the stored activityData
+                const activityIntro = activityData.intro;
+                const activityWrapup = activityData.wrapup;
+                const recordedExperienceContent = activityData.recordedExperience;
+                const expectedEffectInput = document.getElementById('effect-input');
+                const expectedEffect = expectedEffectInput ? expectedEffectInput.value.trim() : '';
+                const expansionPlanInput = document.getElementById('expansion-plan-input');
+                const expansionPlan = expansionPlanInput ? expansionPlanInput.value.trim() : '';
+
+                let mainActivitiesHtml = '';
+                activityData.mainActivities.forEach((mainActivity, index) => {
+                    if (mainActivity.content.trim() !== '') {
+                        mainActivitiesHtml += `<li><strong>전개 (${index + 1}):</strong> ${mainActivity.content.replace(/\n/g, '<br>')}</li>`;
+                    }
+                });
+                if (mainActivitiesHtml === '') {
+                    mainActivitiesHtml = '<li>기록되지 않음</li>';
+                }
+
+                let resourceTableHtml = '';
+                if (activityData.resourceTable.human || activityData.resourceTable.material || activityData.resourceTable.infoCulture) {
+                    resourceTableHtml = `
+                        <table>
+                            <tr><th>자원 유형</th><th>활용할 자원과 방법</th></tr>
+                            <tr><td>인적 자원</td><td>${activityData.resourceTable.human.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><td>물적 자원</td><td>${activityData.resourceTable.material.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><td>정보, 문화 자원</td><td>${activityData.resourceTable.infoCulture.replace(/\n/g, '<br>')}</td></tr>
+                        </table>
+                    `;
+                } else {
+                    resourceTableHtml = '<p>활용할 자원 정보가 기록되지 않았습니다.</p>';
+                }
+
+                let tasteCompetenciesHtml = '';
+                if (activityData.tasteCompetencies.length > 0) {
+                    tasteCompetenciesHtml = `<ul>${activityData.tasteCompetencies.map(comp => `<li>${comp}</li>`).join('')}</ul>`;
+                } else {
+                    tasteCompetenciesHtml = '기록되지 않음';
+                }
+
+                return `
+                    <!DOCTYPE html>
+                    <html lang="ko">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>미술 수업 계획안</title>
+                        <style>
+                            body { 
+                                font-family: 'Noto Sans KR', sans-serif; 
+                                margin: 20px; 
+                                color: #333; 
+                                line-height: 1.6;
+                            }
+                            h1 { 
+                                color: #2C3E50; 
+                                text-align: center; 
+                                margin-bottom: 30px; 
+                            }
+                            h2 {
+                                color: #4A90E2;
+                                margin-top: 25px;
+                                margin-bottom: 15px;
+                                border-bottom: 2px solid #4A90E2;
+                                padding-bottom: 5px;
+                            }
+                            h3 {
+                                color: #333;
+                                font-size: 1.2em;
+                                margin-top: 20px;
+                                margin-bottom: 10px;
+                            }
+                            p.instruction {
+                                background-color: #e0f2f7;
+                                border-left: 5px solid #4A90E2;
+                                padding: 15px;
+                                margin-bottom: 20px;
+                                font-size: 0.95em;
+                            }
+                            table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin-top: 20px; 
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                            }
+                            th, td { 
+                                border: 1px solid #ddd; 
+                                padding: 12px 15px; 
+                                text-align: left; 
+                                vertical-align: top; 
+                            }
+                            th { 
+                                background-color: #f0f4f8; 
+                                font-weight: bold; 
+                                width: 25%; /* Adjusted width for better readability */
+                                color: #334155;
+                            }
+                            td { 
+                                background-color: #fff; 
+                            }
+                            ul {
+                                list-style-type: disc;
+                                margin-left: 20px;
+                                padding-left: 0;
+                            }
+                            ul ul { /* Nested lists */
+                                list-style-type: circle;
+                                margin-left: 20px;
+                            }
+                            .note {
+                                font-size: 0.85em;
+                                color: #666;
+                                margin-top: 30px;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>미술 수업 계획안</h1>
+                        <p class="instruction">
+                            ${instructionMessage}
+                        </p>
+                        
+                        <table>
+                            <tr><th>학년</th><td>${grade}</td></tr>
+                            <tr><th>동네 자원</th><td>${resource}</td></tr>
+                            <tr><th>학습 주제</th><td>${curriculumTopic.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>학습 목표</th><td>${learningObjectives.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>핵심 역량</th><td>${tasteCompetenciesHtml}</td></tr>
+                            <tr><th>주요 활동 (도입)</th><td>${activityIntro.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>주요 활동 (전개)</th><td><ul>${mainActivitiesHtml}</ul></td></tr>
+                            <tr><th>주요 활동 (정리)</th><td>${activityWrapup.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>활용할 자원</th><td>${resourceTableHtml}</td></tr>
+                            <tr><th>체험 활동</th><td>${recordedExperienceContent.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>기대 효과</th><td>${expectedEffect.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>확장 방안</th><td>${expansionPlan.replace(/\n/g, '<br>')}</td></tr>
+                        </table>
+                        <p class="note">이 문서는 Google 문서로의 쉬운 이동을 위해 HTML 형식으로 제공됩니다.</p>
+                    </body>
+                    </html>
+                `;
+            }
+
+            if (finishBtn) {
+                finishBtn.addEventListener('click', () => {
+                // Save all current inputs before showing summary
+                saveActivityInputs();
+
+                const resource = document.getElementById('resource-input').value || '기록되지 않음';
+                const grade = document.getElementById('grade-select').value || '선택 안 됨';
+                
+                const curriculumInput = document.getElementById('curriculum-input');
+                const curriculumTopic = curriculumInput ? curriculumInput.value : '기록되지 않음';
+                const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value : '기록되지 않음';
+                
+                // Use the stored activityData for summary display
+                const activityIntro = activityData.intro;
+                const activityWrapup = activityData.wrapup;
+                const recordedExperienceContent = activityData.recordedExperience;
+                const expectedEffectInput = document.getElementById('effect-input');
+                const expectedEffect = expectedEffectInput ? expectedEffectInput.value : '기록되지 않음';
+                const expansionPlanInput = document.getElementById('expansion-plan-input');
+                const expansionPlan = expansionPlanInput ? expansionPlanInput.value : '기록되지 않음';
+
+                let mainActivitiesSummary = '';
+                activityData.mainActivities.forEach((mainActivity, index) => {
+                    if (mainActivity.content.trim() !== '') {
+                        mainActivitiesSummary += `<li><strong>전개 (${index + 1}):</strong> ${mainActivity.content || '-'}</li>`;
+                    }
+                });
+                if (mainActivitiesSummary === '') {
+                    mainActivitiesSummary = '<li>기록되지 않음</li>';
+                }
+
+                let resourceTableSummary = '';
+                if (activityData.resourceTable.human || activityData.resourceTable.material || activityData.resourceTable.infoCulture) {
+                    resourceTableSummary = `
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>인적 자원:</strong> ${activityData.resourceTable.human || '-'}</li>
+                            <li><strong>물적 자원:</strong> ${activityData.resourceTable.material || '-'}</li>
+                            <li><strong>정보, 문화 자원:</strong> ${activityData.resourceTable.infoCulture || '-'}</li>
+                        </ul>
+                    `;
+                } else {
+                    resourceTableSummary = '기록되지 않음';
+                }
+
+                let tasteCompetenciesSummary = '';
+                if (activityData.tasteCompetencies.length > 0) {
+                    tasteCompetenciesSummary = activityData.tasteCompetencies.map(comp => `${comp}`).join(', ');
+                } else {
+                    tasteCompetenciesSummary = '기록되지 않음';
+                }
+
+                // 안전하게 summary 요소들 업데이트
+                const summaryElements = {
+                    'summary-grade': grade,
+                    'summary-resource': resource,
+                    'summary-curriculum': curriculumTopic,
+                    'summary-objectives': learningObjectives,
+                    'summary-activity-intro': activityIntro,
+                    'summary-activity-wrapup': activityWrapup,
+                    'summary-experience': recordedExperienceContent,
+                    'summary-effect': expectedEffect,
+                    'summary-expansion-plan': expansionPlan,
+                    'summary-taste-competencies': tasteCompetenciesSummary
+                };
+
+                Object.keys(summaryElements).forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = summaryElements[id];
+                    }
+                });
+
+                // HTML 내용이 필요한 요소들 별도 처리
+                const summaryActivityMain = document.getElementById('summary-activity-main');
+                if (summaryActivityMain) {
+                    summaryActivityMain.innerHTML = mainActivitiesSummary;
+                }
+
+                const summaryResourceTable = document.getElementById('summary-resource-table');
+                if (summaryResourceTable) {
+                    summaryResourceTable.innerHTML = resourceTableSummary;
+                }
+
+                workshopSteps.forEach(step => step.classList.add('hidden'));
+                if (summaryView) {
+                    summaryView.classList.remove('hidden');
+                }
+                
+                stepIndicators.forEach(indicator => indicator.classList.remove('active'));
+                
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+                        <h4 class="text-2xl font-bold mb-4">🎉 수업 설계가 완료되었습니다!</h4>
+                        <p class="text-gray-700 mb-6">아래에서 초안을 확인하고 Google 문서로 저장할 수 있습니다.</p>
+                        <button id="close-message-box" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">확인</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+                
+                // messageBox가 DOM에 추가된 후 이벤트 리스너 등록
+                const closeBtn = document.getElementById('close-message-box');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        document.body.removeChild(messageBox);
+                    });
+                }
+                    } catch (error) {
+                        console.error('수업 설계 완료 처리 중 오류 발생:', error);
+                        alert('수업 설계 완료 처리 중 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+                    }
+            });
+        }
+
+            if (saveToGoogleDriveBtn) {
+                saveToGoogleDriveBtn.addEventListener('click', () => {
+                const instructionMessage = `
+                    <strong>Google 문서로 가져오는 방법:</strong><br>
+                    1. 이 페이지의 모든 내용(Ctrl+A 또는 Cmd+A)을 선택한 후 복사(Ctrl+C 또는 Cmd+C)하세요.<br>
+                    2. 새 Google 문서(<a href="https://docs.new" target="_blank" style="color: #1a73e8; text-decoration: underline;">docs.new</a>)를 열고 복사한 내용을 붙여넣기(Ctrl+V 또는 Cmd+V) 하세요.<br>
+                    3. Google 문서에서 '파일' > '사본 만들기'를 선택하여 본인 드라이브에 저장하세요.
+                `;
+                const newWindow = window.open();
+                newWindow.document.write(generateGoogleDocContent(instructionMessage));
+                newWindow.document.close();
+            });
+        }
+
+            // Reset App Functionality
+            const resetAppBtn = document.getElementById('reset-app-btn');
+            if (resetAppBtn) {
+                resetAppBtn.addEventListener('click', () => {
+                    // Clear all textareas and selects
+                    document.querySelectorAll('textarea').forEach(textarea => textarea.value = '');
+                    document.querySelectorAll('select').forEach(select => select.value = '');
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false); // Clear checkboxes
+                    
+                    // Clear all output divs
+                    document.querySelectorAll('[id$="-output"]').forEach(div => {
+                        div.innerHTML = '';
+                        div.classList.add('hidden');
+                    });
+
+                    // Reset activityData
+                    activityData.intro = '';
+                    activityData.mainActivities = [{ content: '' }]; // Reset to one empty main activity
+                    activityData.wrapup = '';
+                    activityData.recordedExperience = '';
+                    activityData.resourceTable = { human: '', material: '', infoCulture: '' };
+                    activityData.tasteCompetencies = [];
+
+                    // Re-render main activities to show only one empty field
+                    renderMainActivities();
+
+                    // Reset current step
+                    currentStepIndex = 0;
+                    updateWorkshopView();
+
+                    // Hide summary view
+                    summaryView.classList.add('hidden');
+
+                    // Reset selected resource display
+                    document.getElementById('selected-resource-display').textContent = '입력된 자원 없음';
+
+                    // Reset the first step indicator to active
+                    stepIndicators.forEach((indicator, index) => {
+                        if (index === 0) {
+                            indicator.classList.add('active');
+                        } else {
+                            indicator.classList.remove('active');
+                        }
+                    });
+                });
+            }
+
+            // Helper function to clean AI output
+            function cleanAiOutput(text) {
+                // Remove leading/trailing whitespace
+                text = text.trim();
+                // Remove common markdown list prefixes and bold/italic markers first
+                text = text.replace(/^[\s\t]*[-*#]+\s*/gm, ''); // Remove -, *, # at line start
+                text = text.replace(/(\*\*|__)(.*?)\1/g, '$2'); // Remove bold **text**
+                text = text.replace(/(\*|_)(.*?)\1/g, '$2'); // Remove italic *text*
+                // Remove any remaining HTML tags (like <a>) that might have slipped through or been generated
+                text = text.replace(/<[^>]*>/g, '');
+
+                const lines = text.split('\n');
+                let formattedHtml = '';
+                let currentParagraphContent = '';
+
+                // Patterns for headers that should start a new logical block and be bolded
+                const boldSectionHeaders = [
+                    '설명:', '준비물:', '활동 방법:', '기대 효과:', '실행 가능:', '참고 사항:', '내용:', '연계 포인트:', '추가 팁:'
+                ];
+
+                const flushParagraph = () => {
+                    if (currentParagraphContent.trim() !== '') {
+                        formattedHtml += `<p>${currentParagraphContent.trim()}</p>`;
+                        currentParagraphContent = '';
+                    }
+                };
+
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i].trim();
+
+                    if (line === '') {
+                        flushParagraph(); // Flush current content as a paragraph
+                        // Add a double break if there was content before this empty line
+                        if (formattedHtml !== '' && !formattedHtml.endsWith('<br><br>')) {
+                            formattedHtml += '<br><br>';
+                        }
+                        continue;
+                    }
+
+                    let isNumberedItem = false;
+                    let isBoldSectionHeader = false;
+                    let headerText = ''; // Stores the text that should be bolded if it's a specific header
+
+                    // Check for numbered items (e.g., "1. 활동명:", "1. (미적 체험) ")
+                    const numberedItemMatch = line.match(/^(\d+\.\s)(.+)/);
+                    if (numberedItemMatch) {
+                        isNumberedItem = true;
+                        flushParagraph(); // Flush any preceding content as a paragraph
+                        // Numbered items are always plain text, followed by double break
+                        formattedHtml += `<p>${line}</p>`; // Just add the line as a paragraph
+                        formattedHtml += '<br><br>'; // Add double break after it
+                        currentParagraphContent = ''; // Reset for next line
+                        continue; // Move to next line
+                    }
+
+                    // Check for explicit bold section headers
+                    for (const header of boldSectionHeaders) {
+                        if (line.startsWith(header)) {
+                            isBoldSectionHeader = true;
+                            headerText = header; // Store the header string itself
+                            break;
+                        }
+                    }
+
+                    if (isBoldSectionHeader) {
+                        flushParagraph(); // Flush any preceding content as a paragraph
+
+                        // Add the bolded header and its immediate content
+                        const contentAfterHeader = line.substring(headerText.length).trim();
+                        formattedHtml += `<p><strong>${headerText}</strong>`;
+                        if (contentAfterHeader) { // Only add content if it exists after the header
+                            formattedHtml += ` ${contentAfterHeader}`;
+                        }
+                        formattedHtml += '</p>'; // Close the header paragraph
+
+                        formattedHtml += '<br><br>'; // Add a double break after the header paragraph
+                        currentParagraphContent = ''; // Ensure next line starts fresh
+                    } else {
+                        // Regular content line, append to current paragraph content
+                        if (currentParagraphContent !== '') {
+                            currentParagraphContent += '<br>'; // Single line break within paragraph
+                        }
+                        currentParagraphContent += line;
+                    }
+                }
+
+                flushParagraph(); // Flush any remaining content at the end
+
+                // Final cleanup for redundant breaks
+                formattedHtml = formattedHtml.replace(/(<br>){3,}/g, '<br><br>'); // Max two breaks
+                formattedHtml = formattedHtml.replace(/<p><br>/g, '<p>'); // Remove <br> immediately after <p>
+                formattedHtml = formattedHtml.replace(/<br><\/p>/g, '</p>'); // Remove <br> immediately before </p>
+                formattedHtml = formattedHtml.replace(/<p>\s*<\/p>/g, ''); // Remove empty <p> tags
+
+                return formattedHtml;
+            }
+
+            // Define the Gemini API endpoint
+            const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
+            // Generic function to call Gemini API directly
+            async function callGeminiAPI(prompt, spinnerElement, outputElement, buttonElement) {
+                if (!CURRENT_API_KEY || CURRENT_API_KEY === "") {
+                    outputElement.classList.remove('hidden');
+                    outputElement.innerHTML = '<p class="text-red-600">API 키가 설정되지 않았습니다. 상단에서 Gemini API 키를 먼저 설정해주세요.</p>';
+                    return;
+                }
+
+                if (spinnerElement) spinnerElement.classList.remove('hidden');
+                if (buttonElement) buttonElement.disabled = true;
+                outputElement.classList.add('hidden');
+                outputElement.innerHTML = '';
+
+                try {
+                    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                    const payload = { contents: chatHistory };
+
+                    const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${CURRENT_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text; // Get raw text from AI
+                        outputElement.innerHTML = `<h4 class="font-bold mb-2">✨ 제안된 내용:</h4>${cleanAiOutput(text)}`; // Pass to cleanAiOutput
+                        outputElement.classList.remove('hidden');
+                    } else {
+                        outputElement.innerHTML = '<p class="text-red-600">응답을 생성하는 데 실패했습니다. API 키가 올바른지 확인하고 다시 시도해주세요.</p>';
+                        outputElement.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    let errorMessage = '네트워크 오류 또는 API 호출 실패';
+                    if (error.message.includes('401') || error.message.includes('403')) {
+                        errorMessage = 'API 키가 올바르지 않거나 권한이 없습니다. API 키를 다시 확인해주세요.';
+                    }
+                    outputElement.innerHTML = `<p class="text-red-600">${errorMessage}: ${error.message}</p>`;
+                    outputElement.classList.remove('hidden');
+                } finally {
+                    if (spinnerElement) spinnerElement.classList.add('hidden');
+                    if (buttonElement) buttonElement.disabled = false;
+                }
+            }
+
+            // Gemini API Integration - Suggest Ideas (Step 1)
+            const suggestIdeasBtn = document.getElementById('suggest-ideas-btn');
+            const resourceInput = document.getElementById('resource-input');
+            const gradeSelectStep1 = document.getElementById('grade-select-step1'); // Grade select for step 1
+            const suggestedIdeasOutput = document.getElementById('suggested-ideas-output');
+            const suggestIdeasSpinner = suggestIdeasBtn ? suggestIdeasBtn.querySelector('.loading-spinner') : null;
+
+            if (suggestIdeasBtn) {
+                suggestIdeasBtn.addEventListener('click', async () => {
+                    const resource = resourceInput.value.trim();
+                    const grade = gradeSelectStep1.value.trim(); // Get grade from step 1 dropdown
+
+                    if (!grade || !resource) {
+                        suggestedIdeasOutput.classList.remove('hidden');
+                        suggestedIdeasOutput.innerHTML = '<p class="text-red-600">학년과 지역 자원을 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 다음 지역 자원 '${resource}'을 활용한 창의적인 미술 활동 아이디어 3가지를 번호 매겨 제안해주세요. 각 아이디어는 활동명과 간단한 설명을 포함해야 합니다.`;
+                    await callGeminiAPI(prompt, suggestIdeasSpinner, suggestedIdeasOutput, suggestIdeasBtn);
+                });
+            }
+
+            // Gemini API Integration - Expand Topic (Step 2)
+            const expandTopicBtn = document.getElementById('expand-topic-btn');
+            const gradeSelect = document.getElementById('grade-select');
+            const curriculumInput = document.getElementById('curriculum-input');
+            const expandedTopicOutput = document.getElementById('expanded-topic-output');
+            const expandTopicSpinner = expandTopicBtn ? expandTopicBtn.querySelector('.loading-spinner') : null;
+
+            if (expandTopicBtn) {
+                expandTopicBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect.value.trim();
+                    const resource = resourceInput.value.trim();
+                    const curriculumTopic = curriculumInput.value.trim();
+
+                    if (!grade || !resource || !curriculumTopic) {
+                        expandedTopicOutput.classList.remove('hidden');
+                        expandedTopicOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 이 학습 주제를 더 흥미롭고 깊이 있게 확장할 수 있는 아이디어를 2-3가지 번호 매겨 제안해주세요. 예를 들어, 다른 교과와의 융합, 사회적 이슈와의 연계, 또는 학생들의 참여를 높일 수 있는 방향 등을 포함해주세요.`;
+                    await callGeminiAPI(prompt, expandTopicSpinner, expandedTopicOutput, expandTopicBtn);
+                });
+            }
+
+            // Gemini API Integration - Suggest Learning Objectives (Step 2)
+            const suggestObjectivesBtn = document.getElementById('suggest-objectives-btn');
+            const learningObjectivesInput = document.getElementById('learning-objectives-input');
+            const suggestedObjectivesOutput = document.getElementById('suggested-objectives-output');
+            const suggestObjectivesSpinner = suggestObjectivesBtn ? suggestObjectivesBtn.querySelector('.loading-spinner') : null;
+
+            if (suggestObjectivesBtn) {
+                suggestObjectivesBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect.value.trim();
+                    const resource = resourceInput.value.trim();
+                    const curriculumTopic = curriculumInput.value.trim();
+
+                    if (!grade || !resource || !curriculumTopic) {
+                        suggestedObjectivesOutput.classList.remove('hidden');
+                        suggestedObjectivesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 때, 달성할 수 있는 구체적인 학습 목표 3가지를 다음 순서대로 작성해주세요. 1. (미적 체험) 2. (표현) 3. (감상). 각 목표는 '~할 수 있다.' 형식이어야 합니다.`;
+                    await callGeminiAPI(prompt, suggestObjectivesSpinner, suggestedObjectivesOutput, suggestObjectivesBtn);
+                });
+            }
+
+            // Step 3 Activity Management
+            const activityIntroInput = document.getElementById('activity-intro');
+            const mainActivitiesContainer = document.getElementById('main-activities-container');
+            const addMainActivityBtn = document.getElementById('add-main-activity-btn');
+            const activityWrapupInput = document.getElementById('activity-wrapup');
+            const recordedExperienceInput = document.getElementById('recorded-experience-input');
+
+            // Resource table inputs
+            const resourceHumanInput = document.getElementById('resource-human');
+            const resourceMaterialInput = document.getElementById('resource-material');
+            const resourceInfoCultureInput = document.getElementById('resource-info-culture');
+
+            // Dynamic '전개' textareas management
+            function renderMainActivities() {
+                mainActivitiesContainer.innerHTML = ''; // Clear existing fields
+                if (activityData.mainActivities.length === 0) {
+                    activityData.mainActivities.push({ content: '' }); // Ensure at least one
+                }
+                activityData.mainActivities.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'main-activity-item space-y-2';
+                    div.innerHTML = `
+                        <label for="activity-main-${index}" class="block text-gray-700 text-sm font-bold mb-2 mt-4">전개 (${index + 1}):</label>
+                        <textarea id="activity-main-${index}" class="form-input" rows="8" placeholder="전개 (핵심 탐구 및 표현 활동...)"></textarea>
+                        ${index > 0 ? `<button type="button" class="remove-main-activity-btn mt-2 bg-red-200 hover:bg-red-300 text-red-800 font-bold py-1 px-3 rounded-lg text-sm">(-) 칸 삭제</button>` : ''}
+                    `;
+                    mainActivitiesContainer.appendChild(div);
+                    const newTextarea = document.getElementById(`activity-main-${index}`);
+                    newTextarea.value = item.content;
+                    newTextarea.addEventListener('input', (e) => {
+                        activityData.mainActivities[index].content = e.target.value;
+                    });
+                });
+                // Add event listeners for new remove buttons
+                document.querySelectorAll('.remove-main-activity-btn').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const indexToRemove = parseInt(e.target.previousElementSibling.id.split('-')[2]);
+                        activityData.mainActivities.splice(indexToRemove, 1);
+                        renderMainActivities(); // Re-render to update numbers and buttons
+                    };
+                });
+            }
+
+            addMainActivityBtn.addEventListener('click', () => {
+                activityData.mainActivities.push({ content: '' });
+                renderMainActivities();
+            });
+
+            function saveActivityInputs() {
+                // Ensure elements exist before trying to access their value
+                activityData.intro = activityIntroInput ? activityIntroInput.value : '';
+                activityData.wrapup = activityWrapupInput ? activityWrapupInput.value : '';
+                activityData.recordedExperience = recordedExperienceInput ? recordedExperienceInput.value : '';
+                
+                // Save resource table data
+                activityData.resourceTable.human = resourceHumanInput ? resourceHumanInput.value : '';
+                activityData.resourceTable.material = resourceMaterialInput ? resourceMaterialInput.value : '';
+                activityData.resourceTable.infoCulture = resourceInfoCultureInput ? resourceInfoCultureInput.value : '';
+
+                // Save dynamic main activities content (already handled by input event listener, but ensure consistency)
+                activityData.mainActivities = [];
+                document.querySelectorAll('[id^="activity-main-"]').forEach(textarea => {
+                    activityData.mainActivities.push({ content: textarea.value });
+                });
+            }
+
+            function loadActivityContent() {
+                // Get element references inside the function for robustness
+                const activityIntroInputEl = document.getElementById('activity-intro');
+                const activityWrapupInputEl = document.getElementById('activity-wrapup');
+                const recordedExperienceInputEl = document.getElementById('recorded-experience-input');
+                const resourceHumanInputEl = document.getElementById('resource-human');
+                const resourceMaterialInputEl = document.getElementById('resource-material');
+                const resourceInfoCultureInputEl = document.getElementById('resource-info-culture');
+
+                if (activityIntroInputEl) activityIntroInputEl.value = activityData.intro;
+                if (activityWrapupInputEl) activityWrapupInputEl.value = activityData.wrapup;
+                if (recordedExperienceInputEl) recordedExperienceInputEl.value = activityData.recordedExperience || '';
+                
+                if (resourceHumanInputEl) resourceHumanInputEl.value = activityData.resourceTable.human || '';
+                if (resourceMaterialInputEl) resourceMaterialInputEl.value = activityData.resourceTable.material || '';
+                if (resourceInfoCultureInputEl) resourceInfoCultureInputEl.value = activityData.resourceTable.infoCulture || '';
+
+                // Load dynamic main activities content
+                renderMainActivities(); // Call render to load saved content
+            }
+
+            // Gemini API Integration - Expand Learning Activity
+            const expandLearningActivityBtn = document.getElementById('expand-learning-activity-btn');
+            const expandedLearningActivityOutput = document.getElementById('expanded-learning-activity-output');
+            const expandLearningActivitySpinner = expandLearningActivityBtn ? expandLearningActivityBtn.querySelector('.loading-spinner') : null;
+
+            if (expandLearningActivityBtn) {
+                expandLearningActivityBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
+                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
+                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
+                    
+                    const intro = document.getElementById('activity-intro').value.trim();
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup').value.trim();
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
+                        expandedLearningActivityOutput.classList.remove('hidden');
+                        expandedLearningActivityOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 현재 활동 내용은 다음과 같습니다: 도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}. 이 내용을 바탕으로 수업의 '전개' 부분에 들어갈 수 있는 구체적이고 다양한 학습 활동 아이디어를 3가지 번호 매겨 제안해주세요. 각 아이디어는 활동명과 간단한 설명을 포함하며, 학생들의 참여를 유도할 수 있는 창의적인 방안을 포함해야 합니다.`;
+                    await callGeminiAPI(prompt, expandLearningActivitySpinner, expandedLearningActivityOutput, expandLearningActivityBtn);
+                });
+            }
+
+            // Gemini API Integration - Expand Experience (Step 3)
+            const expandExperienceBtn = document.getElementById('expand-experience-btn');
+            const expandedExperienceOutput = document.getElementById('expanded-experience-output');
+            const expandExperienceSpinner = expandExperienceBtn ? expandExperienceBtn.querySelector('.loading-spinner') : null;
+
+            if (expandExperienceBtn) { 
+                expandExperienceBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
+                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
+                    const intro = document.getElementById('activity-intro').value.trim();
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup').value.trim();
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+                    const resource = resourceInput ? resourceInput.value.trim() : '';
+
+                    if (!grade || !resource || !curriculumTopic || (!intro && !mainContents && !wrapup)) {
+                        expandedExperienceOutput.classList.remove('hidden');
+                        expandedExperienceOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 활동 내용을 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 활동 내용은 다음과 같습니다: ${activitySummary}. 이 활동 내용을 기반으로 해당 지역에서 실제로 존재할 가능성이 높고 현실적으로 실행 가능한 외부 체험 활동 아이디어를 2-3가지 번호 매겨 제안해주세요. 제안 시, 가상의 기관명만 포함하고 공식 홈페이지 링크는 제외해주세요. 추천할 기관이 없다면 추천하지 않아도 됩니다.`;
+                    await callGeminiAPI(prompt, expandExperienceSpinner, expandedExperienceOutput, expandExperienceBtn);
+                });
+            }
+
+            // Gemini API Integration - Suggest Resources
+            const suggestResourcesBtn = document.getElementById('suggest-resources-btn');
+            const suggestedResourcesOutput = document.getElementById('suggested-resources-output');
+            const suggestResourcesSpinner = suggestResourcesBtn ? suggestResourcesBtn.querySelector('.loading-spinner') : null;
+
+            if (suggestResourcesBtn) {
+                suggestResourcesBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
+                    const resource = resourceInput ? resourceInput.value.trim() : '';
+                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
+                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
+                    const intro = document.getElementById('activity-intro').value.trim();
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup').value.trim();
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !resource || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
+                        suggestedResourcesOutput.classList.remove('hidden');
+                        suggestedResourcesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 활동 내용은 다음과 같습니다: ${activitySummary}. 이 수업과 연관해서 활용할 수 있는 인적 자원, 물적 자원, 정보/문화 자원을 각각 1-2가지씩 구체적으로 추천해주세요. 추천할 자원이 없다면 추천하지 않아도 됩니다.`;
+                    await callGeminiAPI(prompt, suggestResourcesSpinner, suggestedResourcesOutput, suggestResourcesBtn);
+                });
+            }
+
+            // Gemini API Integration - Suggest Expansion Plan
+            const suggestExpansionPlanBtn = document.getElementById('suggest-expansion-plan-btn');
+            const expansionPlanInput = document.getElementById('expansion-plan-input');
+            const suggestedExpansionPlanOutput = document.getElementById('suggested-expansion-plan-output');
+            const suggestExpansionPlanSpinner = suggestExpansionPlanBtn ? suggestExpansionPlanBtn.querySelector('.loading-spinner') : null;
+
+            if (suggestExpansionPlanBtn) {
+                suggestExpansionPlanBtn.addEventListener('click', async () => {
+                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
+                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
+                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
+                    const effectInput = document.getElementById('effect-input');
+                    const expectedEffect = effectInput ? effectInput.value.trim() : '';
+                    
+                    const intro = document.getElementById('activity-intro').value.trim();
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup').value.trim();
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !curriculumTopic || !learningObjectives || !expectedEffect || (!intro && !mainContents && !wrapup)) {
+                        suggestedExpansionPlanOutput.classList.remove('hidden');
+                        suggestedExpansionPlanOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 기대 효과, 활동 내용을 모두 입력해주세요.</p>';
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 진행한 미술 수업의 확장 방안을 2-3가지 번호 매겨 제안해주세요. 학습 목표는 '${learningObjectives}'이고, 주요 활동은 다음과 같습니다: ${activitySummary}. 기대 효과는 '${expectedEffect}' 입니다. 제안하는 확장 방안은 수업의 연속성, 심화 학습, 다른 교과 연계, 지역사회 기여 등을 고려해주세요.`;
+                    await callGeminiAPI(prompt, suggestExpansionPlanSpinner, suggestedExpansionPlanOutput, suggestExpansionPlanBtn);
+                });
+            }
+
+            // Initial rendering of one main activity field
+            renderMainActivities();
+
+            // Initial view update
+            updateWorkshopView();
+            
+            // 초기 API 상태 설정
+            updateApiStatus();
+        });
+    </script>
+</body>
+</html>
