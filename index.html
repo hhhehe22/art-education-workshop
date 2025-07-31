@@ -7,15 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Soft Neutrals & Creative Accents -->
-    <!-- Application Structure Plan: A 120-minute workshop timeline structure. The user navigates through sections corresponding to the training schedule: Introduction (icebreaker), Understanding (case studies), Practice (interactive lesson planner), and Wrap-up (sharing & resources). This task-oriented flow is more effective for a hands-on training session than a generic report layout, guiding teachers through the learning and creation process step-by-step. -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Workshop Agenda -> Goal: Organize -> Viz/Presentation Method: Top navigation bar acting as a progress tracker -> Interaction: Click to navigate to a section -> Justification: Provides clear structure and allows easy movement within the workshop flow.
-        - Report Info: Case Studies -> Goal: Inform/Compare -> Viz/Presentation Method: Interactive cards with hover/click effects -> Interaction: Click to reveal detailed information for each case -> Justification: Makes exploring diverse examples engaging and prevents information overload. Library/Method: HTML/CSS/JS.
-        - Report Info: Lesson Design Guidelines -> Goal: Inform/Guide -> Viz/Presentation Method: A multi-step interactive "Lesson Plan Builder" with input fields and guiding questions -> Interaction: Users type their ideas directly into the fields, and AI suggestions are provided. -> Justification: Facilitates active lesson planning with AI assistance. Library/Method: HTML/CSS/JS.
-        - Report Info: Case Study Types -> Goal: Inform -> Viz/Presentation Method: A simple doughnut chart -> Interaction: Hover to see details -> Justification: Provides a quick visual summary of the different models of community partnership. Library/Method: Chart.js/Canvas.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -40,9 +31,6 @@
         .nav-button:hover {
             color: #4A90E2;
             background-color: #F0F5FA;
-        }
-        .pill-button {
-            transition: all 0.3s ease;
         }
         .case-card {
             perspective: 1000px;
@@ -83,7 +71,7 @@
         }
         .step-indicator {
             transition: all 0.3s ease;
-            cursor: pointer; /* Make it clickable */
+            cursor: pointer;
         }
         .step-indicator.active {
             background-color: #4A90E2;
@@ -114,71 +102,104 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.hidden {
+            display: none;
+        }
+        .api-key-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .api-key-button:hover {
+            background-color: #357ABD;
+            transform: scale(1.1);
+        }
+        .api-key-button.active {
+            background-color: #10B981;
+        }
     </style>
 </head>
 <body class="bg-[#F9F9F7]">
 
-    <div class="container mx-auto px-4 py-8">
-        
-        <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">미술교과 기반 지역연계 학교예술교육</h1>
-            <p class="text-lg text-gray-500 mt-4">초등 교원을 위한 실습 중심 워크숍</p>
-        </header>
+    <!-- API 키 설정 버튼 -->
+    <button id="api-key-btn" class="api-key-button" title="API 키 설정">
+        🔑
+    </button>
 
-        <!-- API 키 설정 섹션 -->
-        <div class="max-w-4xl mx-auto mb-8">
-            <div class="section-card p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">🔑 AI 기능 설정</h3>
-                    <button id="api-toggle-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                        설정하기
+    <!-- API 키 설정 모달 -->
+    <div id="api-modal" class="modal hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">🔑 Gemini API 키 설정</h3>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <h4 class="font-bold text-blue-800 mb-2">📋 API 키 발급 방법</h4>
+                <ol class="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li><a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline hover:text-blue-900">Google AI Studio</a>에 접속</li>
+                    <li>"Create API Key" 버튼 클릭</li>
+                    <li>생성된 API 키를 아래에 입력</li>
+                </ol>
+            </div>
+            
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="api-key-input" 
+                    class="form-input" 
+                    placeholder="Gemini API 키를 입력하세요 (예: AIzaSy...)"
+                >
+                
+                <div id="api-status" class="text-sm text-gray-600">
+                    API 키를 입력하면 AI 추천 기능을 사용할 수 있습니다.
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="api-save-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
+                        저장
                     </button>
-                </div>
-                
-                <div id="api-setup-section" class="hidden">
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-                        <h4 class="font-bold text-blue-800 mb-2">📋 Gemini API 키 발급 방법</h4>
-                        <ol class="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" class="underline hover:text-blue-900">Google AI Studio</a>에 접속하세요</li>
-                            <li>"Create API Key" 버튼을 클릭합니다</li>
-                            <li>생성된 API 키를 복사하여 아래 입력란에 붙여넣으세요</li>
-                            <li>API 키는 브라우저에만 저장되며 외부로 전송되지 않습니다</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="flex gap-3">
-                        <input 
-                            type="password" 
-                            id="api-key-input" 
-                            class="flex-1 form-input" 
-                            placeholder="Gemini API 키를 입력하세요 (예: AIzaSy...)"
-                        >
-                        <button id="api-key-save-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg">
-                            저장
-                        </button>
-                        <button id="api-key-clear-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">
-                            삭제
-                        </button>
-                    </div>
-                    
-                    <div id="api-status" class="mt-3 text-sm">
-                        <span id="api-status-text" class="text-gray-600">API 키가 설정되지 않았습니다. AI 추천 기능을 사용하려면 API 키를 입력해주세요.</span>
-                    </div>
-                </div>
-                
-                <div id="api-configured-section" class="hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-green-600">✅</span>
-                            <span class="text-green-700 font-medium">AI 기능이 활성화되었습니다</span>
-                        </div>
-                        <button id="api-reconfigure-btn" class="text-sm text-gray-600 hover:text-gray-800">
-                            재설정
-                        </button>
-                    </div>
+                    <button id="api-cancel-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+                        취소
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">미술교과 기반 지역연계 학교예술교육</h1>
+            <p class="text-lg text-gray-500 mt-4">초등 교원을 위한 실습 중심 워크숍</p>
+            
+            <!-- API 상태 표시 -->
+            <div id="api-status-banner" class="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+                ⚠️ AI 기능을 사용하려면 우측 상단의 🔑 버튼을 클릭하여 API 키를 설정해주세요.
+            </div>
+        </header>
 
         <nav class="sticky top-0 bg-white/80 backdrop-blur-sm z-10 shadow-sm rounded-lg mb-12">
             <div class="max-w-5xl mx-auto px-4">
@@ -276,7 +297,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- New Case Study 1 -->
                         <div class="case-card h-64 cursor-pointer">
                             <div class="case-card-inner">
                                 <div class="case-card-front">
@@ -290,11 +310,10 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- New Case Study 2 -->
                         <div class="case-card h-64 cursor-pointer">
                             <div class="case-card-inner">
                                 <div class="case-card-front">
-                                    <h3 class="2xl font-bold">생태 미술 프로젝트</h3>
+                                    <h3 class="text-2xl font-bold">생태 미술 프로젝트</h3>
                                     <p class="mt-2">자연과 함께하는 예술, 환경을 지키는 미술</p>
                                     <span class="mt-4 text-xs font-semibold">(클릭하여 자세히 보기)</span>
                                 </div>
@@ -335,7 +354,7 @@
                             </select>
                         </div>
                         <textarea id="resource-input" class="form-input" rows="4" placeholder="자유롭게 기록해보세요..."></textarea>
-                        <button id="suggest-ideas-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                        <button id="suggest-ideas-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="suggest-ideas-spinner" class="hidden loading-spinner mr-2"></span>
                             ✨ 아이디어 제안 받기
                         </button>
@@ -361,7 +380,6 @@
                             <p id="selected-resource-display" class="form-input bg-gray-100 text-gray-600"></p>
                         </div>
 
-                        <!-- TASTE Competencies Checkboxes -->
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">핵심 역량:</label>
                             <p class="text-gray-500 text-xs mb-2">수업을 통해 함양하고자 하는 역량을 선택하세요.</p>
@@ -393,7 +411,7 @@
                             <div class="topic-objective-pair">
                                 <label for="curriculum-input" class="block text-gray-700 text-sm font-bold mb-2">학습 주제:</label>
                                 <textarea id="curriculum-input" class="form-input" rows="2" placeholder="수업 주제를 기록해보세요..."></textarea>
-                                <button id="expand-topic-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                                <button id="expand-topic-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                                     <span id="expand-topic-spinner" class="loading-spinner hidden mr-2"></span>
                                     ✨ 학습 주제 확장
                                 </button>
@@ -403,11 +421,11 @@
                                 <p class="text-gray-500 text-xs mb-2">미술과 교육과정의 '내용 체계 및 성취기준'을 참고하여 구체적인 학습 목표를 작성해보세요.</p>
                                 <textarea id="learning-objectives-input" class="form-input" rows="4" placeholder="학습 목표를 구체적으로 작성해보세요..."></textarea>
                                 <div class="flex justify-between items-center mt-4">
-                                    <button id="suggest-objectives-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                                    <button id="suggest-objectives-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                                         <span id="suggest-objectives-spinner" class="loading-spinner hidden mr-2"></span>
                                         ✨ 학습 목표 제안 받기
                                     </button>
-                                    <a href="https://notebooklm.google.com/notebook/fdb22972-091a-42b6-bf37-54aeb1da1d09?_gl=1*7b1u6q*_ga*MTc0NDM3NTc2My4xNzQ4NDkxOTQy*_ga_W0LDH41ZCB*czE3NDg0OTE5NDEkbzEkZzAkdDE3NDg0OTE5NDUkajYwJGwwJGgw&original_referer=https:%2F%2Fnotebooklm.google%23&pli=1" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg text-center flex-shrink-0">2022개정교육과정 챗봇</a>
+                                    <a href="https://notebooklm.google.com/notebook/fdb22972-091a-42b6-bf37-54aeb1da1d09" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg text-center flex-shrink-0">2022개정교육과정 챗봇</a>
                                 </div>
                                 <div id="suggested-objectives-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
                             </div>
@@ -423,7 +441,6 @@
                         <h3 class="font-bold text-2xl mb-4 text-gray-700">3단계: 활동 내용 구체화 (120분 기준)</h3>
                         <p class="text-gray-600 mb-6">수업의 흐름을 '도입-전개-정리'로 나누어 구체적인 활동을 설계해보세요. 학생들의 흥미를 어떻게 유발하고, 핵심 활동은 무엇이며, 마무리는 어떻게 할까요?</p>
                         
-                        <!-- Activity content fields for the single topic -->
                         <div class="space-y-4">
                             <textarea id="activity-intro" class="form-input" rows="2" placeholder="도입 (흥미 유발, 동기 부여 활동...)"></textarea>
                             <div id="main-activities-container">
@@ -434,14 +451,12 @@
                             <textarea id="activity-wrapup" class="form-input mt-4" rows="2" placeholder="정리 (작품 공유, 느낀 점 나누기, 차시 예고...)"></textarea>
                         </div>
 
-                        <!-- New: Expand Learning Activity Button and Output -->
-                        <button id="expand-learning-activity-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                        <button id="expand-learning-activity-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="expand-learning-activity-spinner" class="hidden loading-spinner mr-2"></span>
                             ✨ 학습 활동 확장
                         </button>
                         <div id="expanded-learning-activity-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
 
-                        <!-- Resource Table -->
                         <h4 class="font-bold text-xl mt-8 mb-4 text-gray-700">활용할 자원</h4>
                         <p class="text-gray-600 mb-4">수업에 활용할 자원을 기록하거나 AI 추천을 받아보세요. 모든 칸을 채울 필요는 없습니다.</p>
                         <table class="w-full border-collapse">
@@ -466,17 +481,16 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <button id="suggest-resources-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                        <button id="suggest-resources-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="suggest-resources-spinner" class="hidden loading-spinner mr-2"></span>
                             ✨ 자원 추천 받기
                         </button>
                         <div id="suggested-resources-output" class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-800 hidden"></div>
                         
-                        <!-- Experience after resources -->
                         <h4 class="font-bold text-xl mt-8 mb-4 text-gray-700">체험 활동</h4>
                         <p class="text-gray-600 mb-4">외부 체험 활동 아이디어를 기록하거나 AI 추천을 받아보세요.</p>
                         <textarea id="recorded-experience-input" class="form-input mt-4" rows="4" placeholder="추천받은 체험 활동 아이디어를 기록하거나 수정해보세요..."></textarea>
-                        <button id="expand-experience-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                        <button id="expand-experience-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span id="expand-experience-spinner" class="hidden loading-spinner mr-2"></span>
                             ✨ 체험 활동 확장
                         </button>
@@ -497,7 +511,7 @@
                         <div class="mb-4">
                             <label for="expansion-plan-input" class="block text-gray-700 text-sm font-bold mb-2">확장 방안:</label>
                             <textarea id="expansion-plan-input" class="form-input" rows="4" placeholder="수업의 확장 방안을 기록해보세요..."></textarea>
-                            <button id="suggest-expansion-plan-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center">
+                            <button id="suggest-expansion-plan-btn" class="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span id="suggest-expansion-plan-spinner" class="hidden loading-spinner mr-2"></span>
                                 ✨ 수업의 확장 방안 추천
                             </button>
@@ -529,7 +543,7 @@
                         <div class="mt-6 flex justify-center space-x-4">
                             <button id="reset-app-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">초기화</button>
                             <button id="save-to-google-drive-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
-                                계획서 Google 문서로 저장하기
+                                계획서 HTML 파일로 저장하기
                             </button>
                         </div>
                     </div>
@@ -665,46 +679,87 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // API 키 관리 (메모리에 저장 - 새로고침 시 재입력 필요)
-            let CURRENT_API_KEY = "";
+            console.log('애플리케이션이 시작되었습니다.');
             
-            // Google Apps Script 웹앱 URL (실제 배포 URL로 교체하세요)
-            const GAS_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+            // API 키 관리
+            let CURRENT_API_KEY = "";
+            const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
-            // API 키 관리 요소들
-            const apiToggleBtn = document.getElementById('api-toggle-btn');
-            const apiSetupSection = document.getElementById('api-setup-section');
-            const apiConfiguredSection = document.getElementById('api-configured-section');
+            // DOM 요소들
+            const apiKeyBtn = document.getElementById('api-key-btn');
+            const apiModal = document.getElementById('api-modal');
             const apiKeyInput = document.getElementById('api-key-input');
-            const apiKeySaveBtn = document.getElementById('api-key-save-btn');
-            const apiKeyClearBtn = document.getElementById('api-key-clear-btn');
-            const apiReconfigureBtn = document.getElementById('api-reconfigure-btn');
-            const apiStatusText = document.getElementById('api-status-text');
+            const apiSaveBtn = document.getElementById('api-save-btn');
+            const apiCancelBtn = document.getElementById('api-cancel-btn');
+            const apiStatus = document.getElementById('api-status');
+            const apiStatusBanner = document.getElementById('api-status-banner');
 
-            // API 키 상태 업데이트 함수
-            function updateApiStatus() {
-                if (CURRENT_API_KEY) {
-                    apiSetupSection.classList.add('hidden');
-                    apiConfiguredSection.classList.remove('hidden');
-                    apiToggleBtn.textContent = '설정됨';
-                    apiToggleBtn.classList.add('text-green-600', 'hover:text-green-800');
-                    apiToggleBtn.classList.remove('text-blue-600', 'hover:text-blue-800');
-                    enableAiFeatures();
-                } else {
-                    apiSetupSection.classList.add('hidden');
-                    apiConfiguredSection.classList.add('hidden');
-                    apiToggleBtn.textContent = '설정하기';
-                    apiToggleBtn.classList.add('text-blue-600', 'hover:text-blue-800');
-                    apiToggleBtn.classList.remove('text-green-600', 'hover:text-green-800');
-                    disableAiFeatures();
-                }
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            const caseCards = document.querySelectorAll('.case-card');
+
+            // API 키 유효성 검사 함수
+            function isValidApiKey(key) {
+                return key && key.trim().length > 20 && key.trim().startsWith('AIza');
             }
 
-            // AI 기능 활성화
-            function enableAiFeatures() {
-                const aiButtons = document.querySelectorAll('[id$="-btn"]:not(#api-toggle-btn):not(#api-key-save-btn):not(#api-key-clear-btn):not(#api-reconfigure-btn)');
+            // API 키 모달 관리
+            if (apiKeyBtn) {
+                apiKeyBtn.addEventListener('click', () => {
+                    apiModal.classList.remove('hidden');
+                    apiKeyInput.focus();
+                });
+            }
+
+            if (apiCancelBtn) {
+                apiCancelBtn.addEventListener('click', () => {
+                    apiModal.classList.add('hidden');
+                    apiKeyInput.value = '';
+                });
+            }
+
+            if (apiSaveBtn) {
+                apiSaveBtn.addEventListener('click', () => {
+                    const apiKey = apiKeyInput.value.trim();
+                    
+                    if (!isValidApiKey(apiKey)) {
+                        apiStatus.textContent = '올바른 Gemini API 키를 입력해주세요. (AIza로 시작하는 39자리)';
+                        apiStatus.className = 'text-sm text-red-600';
+                        return;
+                    }
+                    
+                    CURRENT_API_KEY = apiKey;
+                    apiKeyInput.value = '';
+                    apiModal.classList.add('hidden');
+                    
+                    // UI 업데이트
+                    apiKeyBtn.classList.add('active');
+                    apiKeyBtn.title = 'API 키 설정됨 (클릭하여 재설정)';
+                    apiStatusBanner.innerHTML = '✅ API 키가 설정되었습니다. 이제 AI 추천 기능을 사용할 수 있습니다.';
+                    apiStatusBanner.className = 'mt-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm';
+                    
+                    // AI 버튼들 활성화
+                    enableAiButtons();
+                    
+                    console.log('API 키가 설정되었습니다.');
+                });
+            }
+
+            // 모달 외부 클릭 시 닫기
+            if (apiModal) {
+                apiModal.addEventListener('click', (e) => {
+                    if (e.target === apiModal) {
+                        apiModal.classList.add('hidden');
+                        apiKeyInput.value = '';
+                    }
+                });
+            }
+
+            // AI 버튼 활성화/비활성화
+            function enableAiButtons() {
+                const aiButtons = document.querySelectorAll('button[id*="suggest"], button[id*="expand"]');
                 aiButtons.forEach(btn => {
-                    if (btn.textContent.includes('✨')) {
+                    if (btn) {
                         btn.disabled = false;
                         btn.classList.remove('opacity-50', 'cursor-not-allowed');
                         btn.title = '';
@@ -712,11 +767,10 @@
                 });
             }
 
-            // AI 기능 비활성화
-            function disableAiFeatures() {
-                const aiButtons = document.querySelectorAll('[id$="-btn"]:not(#api-toggle-btn):not(#api-key-save-btn):not(#api-key-clear-btn):not(#api-reconfigure-btn)');
+            function disableAiButtons() {
+                const aiButtons = document.querySelectorAll('button[id*="suggest"], button[id*="expand"]');
                 aiButtons.forEach(btn => {
-                    if (btn.textContent.includes('✨')) {
+                    if (btn) {
                         btn.disabled = true;
                         btn.classList.add('opacity-50', 'cursor-not-allowed');
                         btn.title = 'API 키를 먼저 설정해주세요';
@@ -724,74 +778,7 @@
                 });
             }
 
-            // API 키 토글 버튼
-            apiToggleBtn.addEventListener('click', () => {
-                if (CURRENT_API_KEY) {
-                    apiConfiguredSection.classList.add('hidden');
-                    apiSetupSection.classList.toggle('hidden');
-                } else {
-                    apiSetupSection.classList.toggle('hidden');
-                }
-            });
-
-            // API 키 저장
-            apiKeySaveBtn.addEventListener('click', () => {
-                const apiKey = apiKeyInput.value.trim();
-                if (apiKey.length < 10) {
-                    apiStatusText.textContent = '올바른 API 키를 입력해주세요.';
-                    apiStatusText.className = 'text-red-600';
-                    return;
-                }
-                
-                CURRENT_API_KEY = apiKey;
-                apiKeyInput.value = '';
-                apiStatusText.textContent = 'API 키가 성공적으로 저장되었습니다!';
-                apiStatusText.className = 'text-green-600';
-                
-                setTimeout(() => {
-                    updateApiStatus();
-                }, 1000);
-            });
-
-            // API 키 삭제
-            apiKeyClearBtn.addEventListener('click', () => {
-                CURRENT_API_KEY = "";
-                apiKeyInput.value = '';
-                apiStatusText.textContent = 'API 키가 삭제되었습니다.';
-                apiStatusText.className = 'text-gray-600';
-                updateApiStatus();
-            });
-
-            // API 키 재설정
-            apiReconfigureBtn.addEventListener('click', () => {
-                apiConfiguredSection.classList.add('hidden');
-                apiSetupSection.classList.remove('hidden');
-                apiKeyInput.focus();
-            });
-
-            // Google Apps Script로 데이터 전송하는 함수
-            async function createGoogleDoc(data) {
-                try {
-                    const response = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Google Apps Script 호출 오류:', error);
-                    return { success: false, message: '네트워크 오류가 발생했습니다.' };
-                }
-            }
-
-            const navButtons = document.querySelectorAll('.nav-button');
-            const contentSections = document.querySelectorAll('.content-section');
-            const caseCards = document.querySelectorAll('.case-card');
-            
+            // 네비게이션
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const targetId = button.dataset.target;
@@ -806,66 +793,76 @@
                             section.classList.add('hidden');
                         }
                     });
-                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
 
+            // 케이스 카드
             caseCards.forEach(card => {
                 card.addEventListener('click', () => {
                     card.classList.toggle('flipped');
                 });
             });
             
-            const ctx = document.getElementById('caseTypeChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['공공미술 프로젝트', '장소 탐방 & 재해석', '전문가 협력', '지역 문화유산 재해석', '생태 미술 프로젝트'],
-                    datasets: [{
-                        label: '사례 유형',
-                        data: [25, 20, 20, 20, 15], // Updated data for 5 categories
-                        backgroundColor: [
-                            'rgba(74, 144, 226, 0.7)',
-                            'rgba(80, 227, 194, 0.7)',
-                            'rgba(186, 104, 200, 0.7)',
-                            'rgba(255, 159, 64, 0.7)', // New color for new category
-                            'rgba(75, 192, 192, 0.7)'  // New color for new category
-                        ],
-                        borderColor: [
-                            '#4A90E2',
-                            '#50E3C2',
-                            '#BA68C8',
-                            '#FF9F40',
-                            '#4BC0C0'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
+            // 차트 초기화
+            const chartCanvas = document.getElementById('caseTypeChart');
+            if (chartCanvas) {
+                try {
+                    const ctx = chartCanvas.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['공공미술 프로젝트', '장소 탐방 & 재해석', '전문가 협력', '지역 문화유산 재해석', '생태 미술 프로젝트'],
+                            datasets: [{
+                                label: '사례 유형',
+                                data: [25, 20, 20, 20, 15],
+                                backgroundColor: [
+                                    'rgba(74, 144, 226, 0.7)',
+                                    'rgba(80, 227, 194, 0.7)',
+                                    'rgba(186, 104, 200, 0.7)',
+                                    'rgba(255, 159, 64, 0.7)',
+                                    'rgba(75, 192, 192, 0.7)'
+                                ],
+                                borderColor: [
+                                    '#4A90E2',
+                                    '#50E3C2',
+                                    '#BA68C8',
+                                    '#FF9F40',
+                                    '#4BC0C0'
+                                ],
+                                borderWidth: 1
+                            }]
                         },
-                        title: {
-                            display: true,
-                            text: '지역연계 교육 사례 유형 분포'
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: '지역연계 교육 사례 유형 분포'
+                                }
+                            }
                         }
-                    }
+                    });
+                } catch (error) {
+                    console.error('차트 초기화 오류:', error);
                 }
-            });
+            }
 
+            // 워크샵 관리
             const workshopSteps = document.querySelectorAll('.workshop-step');
             const stepIndicators = document.querySelectorAll('.step-indicator');
             const nextButtons = document.querySelectorAll('.next-step-btn');
             const prevButtons = document.querySelectorAll('.prev-step-btn');
-            let currentStepIndex = 0; // Changed variable name to avoid conflict with `currentStep` in other parts
+            let currentStepIndex = 0;
 
-            // Store activity data for the single topic
+            // 활동 데이터 저장
             const activityData = {
                 intro: '',
-                mainActivities: [{ content: '' }], // Array for dynamic '전개' sections
+                mainActivities: [{ content: '' }],
                 wrapup: '',
                 recordedExperience: '',
                 resourceTable: {
@@ -873,92 +870,89 @@
                     material: '',
                     infoCulture: ''
                 },
-                tasteCompetencies: [] // Array to store selected TASTE competencies
+                tasteCompetencies: []
             };
 
             function updateWorkshopView() {
                 workshopSteps.forEach((step, index) => {
-                    step.classList.toggle('hidden', index !== currentStepIndex);
+                    if (step) {
+                        step.classList.toggle('hidden', index !== currentStepIndex);
+                    }
                 });
                 stepIndicators.forEach((indicator, index) => {
-                    indicator.classList.toggle('active', index === currentStepIndex);
+                    if (indicator) {
+                        indicator.classList.toggle('active', index === currentStepIndex);
+                    }
                 });
 
-                // Update resource display in step 2
-                if (currentStepIndex === 1) { // Step 2 is now index 1
-                    const resourceInput = document.getElementById('resource-input'); // Get element here
-                    document.getElementById('selected-resource-display').textContent = resourceInput ? resourceInput.value : '입력된 자원 없음';
-                    loadTasteCompetencies(); // Load TASTE checkboxes when entering step 2
+                if (currentStepIndex === 1) {
+                    const resourceInput = document.getElementById('resource-input');
+                    const resourceDisplay = document.getElementById('selected-resource-display');
+                    if (resourceInput && resourceDisplay) {
+                        resourceDisplay.textContent = resourceInput.value || '입력된 자원 없음';
+                    }
+                    loadTasteCompetencies();
                 }
                 
-                // Load activity content for the single topic in step 3
-                if (currentStepIndex === 2) { // Step 3 is now index 2
-                    // Add a small delay to ensure DOM is fully rendered
+                if (currentStepIndex === 2) {
                     setTimeout(() => {
                         loadActivityContent();
-                        renderMainActivities(); // Render dynamic '전개' sections
-                    }, 50); // 50ms delay
+                        renderMainActivities();
+                    }, 50);
                 }
             }
 
-            // Step Indicator Navigation
-            stepIndicators.forEach(indicator => {
-                indicator.addEventListener('click', () => {
-                    // Save current activity content before navigating if leaving step 3
-                    if (currentStepIndex === 2) {
-                        saveActivityInputs(); // Save all activity related inputs
-                    }
-                    // Save TASTE competencies before leaving step 2
-                    if (currentStepIndex === 1) {
-                        saveTasteCompetencies();
-                    }
-                    currentStepIndex = parseInt(indicator.id.replace('step-indicator-', '')); // Get index from ID
-                    updateWorkshopView();
-                });
+            // 단계 표시기 네비게이션
+            stepIndicators.forEach((indicator, index) => {
+                if (indicator) {
+                    indicator.addEventListener('click', () => {
+                        if (currentStepIndex === 2) {
+                            saveActivityInputs();
+                        }
+                        if (currentStepIndex === 1) {
+                            saveTasteCompetencies();
+                        }
+                        currentStepIndex = index;
+                        updateWorkshopView();
+                    });
+                }
             });
 
             nextButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Save current activity content before navigating if leaving step 3
-                    if (currentStepIndex === 2) {
-                        saveActivityInputs(); // Save all activity related inputs
-                    }
-                    // Save TASTE competencies before leaving step 2
-                    if (currentStepIndex === 1) {
-                        saveTasteCompetencies();
-                    }
-                    if (currentStepIndex < workshopSteps.length - 1) {
-                        currentStepIndex++;
-                        updateWorkshopView();
-                    }
-                });
+                if (button) {
+                    button.addEventListener('click', () => {
+                        if (currentStepIndex === 2) {
+                            saveActivityInputs();
+                        }
+                        if (currentStepIndex === 1) {
+                            saveTasteCompetencies();
+                        }
+                        if (currentStepIndex < workshopSteps.length - 1) {
+                            currentStepIndex++;
+                            updateWorkshopView();
+                        }
+                    });
+                }
             });
 
             prevButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                     // Save current activity content before navigating if leaving step 3
-                    if (currentStepIndex === 2) {
-                        saveActivityInputs(); // Save all activity related inputs
-                    }
-                    // Save TASTE competencies before leaving step 2
-                    if (currentStepIndex === 1) {
-                        saveTasteCompetencies();
-                    }
-                    if (currentStepIndex > 0) {
-                        currentStepIndex--;
-                        updateWorkshopView();
-                    }
-                });
+                if (button) {
+                    button.addEventListener('click', () => {
+                        if (currentStepIndex === 2) {
+                            saveActivityInputs();
+                        }
+                        if (currentStepIndex === 1) {
+                            saveTasteCompetencies();
+                        }
+                        if (currentStepIndex > 0) {
+                            currentStepIndex--;
+                            updateWorkshopView();
+                        }
+                    });
+                }
             });
-            
-            const finishBtn = document.getElementById('finish-btn');
-            const summaryView = document.getElementById('summary-view');
-            const saveToGoogleDriveBtn = document.getElementById('save-to-google-drive-btn');
-            
-            console.log('finishBtn:', finishBtn); // 디버깅용
-            console.log('summaryView:', summaryView); // 디버깅용
 
-            // TASTE Competencies Checkbox handling
+            // TASTE 역량 관리
             const tasteCheckboxes = document.querySelectorAll('input[name="taste-competency"]');
             function saveTasteCompetencies() {
                 activityData.tasteCompetencies = Array.from(tasteCheckboxes)
@@ -967,36 +961,441 @@
             }
             function loadTasteCompetencies() {
                 tasteCheckboxes.forEach(checkbox => {
-                    checkbox.checked = activityData.tasteCompetencies.includes(checkbox.value);
+                    if (checkbox) {
+                        checkbox.checked = activityData.tasteCompetencies.includes(checkbox.value);
+                    }
                 });
             }
             tasteCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', saveTasteCompetencies);
+                if (checkbox) {
+                    checkbox.addEventListener('change', saveTasteCompetencies);
+                }
             });
 
-            // Function to generate Google Doc content HTML
-            function generateGoogleDocContent(instructionMessage) {
-                const grade = document.getElementById('grade-select').value || '선택 안 됨';
-                const resource = document.getElementById('resource-input').value || '기록되지 않음';
-                
-                const curriculumInput = document.getElementById('curriculum-input');
-                const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
-                const learningObjectivesInput = document.getElementById('learning-objectives-input');
-                const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
-                
-                // Use the stored activityData
-                const activityIntro = activityData.intro;
-                const activityWrapup = activityData.wrapup;
-                const recordedExperienceContent = activityData.recordedExperience;
-                const expectedEffectInput = document.getElementById('effect-input');
-                const expectedEffect = expectedEffectInput ? expectedEffectInput.value.trim() : '';
-                const expansionPlanInput = document.getElementById('expansion-plan-input');
-                const expansionPlan = expansionPlanInput ? expansionPlanInput.value.trim() : '';
+            // 메인 활동 관리
+            const mainActivitiesContainer = document.getElementById('main-activities-container');
+            const addMainActivityBtn = document.getElementById('add-main-activity-btn');
 
+            function renderMainActivities() {
+                if (!mainActivitiesContainer) return;
+                
+                mainActivitiesContainer.innerHTML = '';
+                if (activityData.mainActivities.length === 0) {
+                    activityData.mainActivities.push({ content: '' });
+                }
+                activityData.mainActivities.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'main-activity-item space-y-2';
+                    div.innerHTML = `
+                        <label for="activity-main-${index}" class="block text-gray-700 text-sm font-bold mb-2 mt-4">전개 (${index + 1}):</label>
+                        <textarea id="activity-main-${index}" class="form-input" rows="8" placeholder="전개 (핵심 탐구 및 표현 활동...)"></textarea>
+                        ${index > 0 ? `<button type="button" class="remove-main-activity-btn mt-2 bg-red-200 hover:bg-red-300 text-red-800 font-bold py-1 px-3 rounded-lg text-sm">(-) 칸 삭제</button>` : ''}
+                    `;
+                    mainActivitiesContainer.appendChild(div);
+                    const newTextarea = document.getElementById(`activity-main-${index}`);
+                    if (newTextarea) {
+                        newTextarea.value = item.content;
+                        newTextarea.addEventListener('input', (e) => {
+                            activityData.mainActivities[index].content = e.target.value;
+                        });
+                    }
+                });
+                
+                document.querySelectorAll('.remove-main-activity-btn').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const indexToRemove = parseInt(e.target.previousElementSibling.id.split('-')[2]);
+                        activityData.mainActivities.splice(indexToRemove, 1);
+                        renderMainActivities();
+                    };
+                });
+            }
+
+            if (addMainActivityBtn) {
+                addMainActivityBtn.addEventListener('click', () => {
+                    activityData.mainActivities.push({ content: '' });
+                    renderMainActivities();
+                });
+            }
+
+            function saveActivityInputs() {
+                const activityIntroInput = document.getElementById('activity-intro');
+                const activityWrapupInput = document.getElementById('activity-wrapup');
+                const recordedExperienceInput = document.getElementById('recorded-experience-input');
+                const resourceHumanInput = document.getElementById('resource-human');
+                const resourceMaterialInput = document.getElementById('resource-material');
+                const resourceInfoCultureInput = document.getElementById('resource-info-culture');
+
+                activityData.intro = activityIntroInput ? activityIntroInput.value : '';
+                activityData.wrapup = activityWrapupInput ? activityWrapupInput.value : '';
+                activityData.recordedExperience = recordedExperienceInput ? recordedExperienceInput.value : '';
+                activityData.resourceTable.human = resourceHumanInput ? resourceHumanInput.value : '';
+                activityData.resourceTable.material = resourceMaterialInput ? resourceMaterialInput.value : '';
+                activityData.resourceTable.infoCulture = resourceInfoCultureInput ? resourceInfoCultureInput.value : '';
+
+                activityData.mainActivities = [];
+                document.querySelectorAll('[id^="activity-main-"]').forEach(textarea => {
+                    activityData.mainActivities.push({ content: textarea.value });
+                });
+            }
+
+            function loadActivityContent() {
+                const activityIntroInput = document.getElementById('activity-intro');
+                const activityWrapupInput = document.getElementById('activity-wrapup');
+                const recordedExperienceInput = document.getElementById('recorded-experience-input');
+                const resourceHumanInput = document.getElementById('resource-human');
+                const resourceMaterialInput = document.getElementById('resource-material');
+                const resourceInfoCultureInput = document.getElementById('resource-info-culture');
+
+                if (activityIntroInput) activityIntroInput.value = activityData.intro;
+                if (activityWrapupInput) activityWrapupInput.value = activityData.wrapup;
+                if (recordedExperienceInput) recordedExperienceInput.value = activityData.recordedExperience || '';
+                if (resourceHumanInput) resourceHumanInput.value = activityData.resourceTable.human || '';
+                if (resourceMaterialInput) resourceMaterialInput.value = activityData.resourceTable.material || '';
+                if (resourceInfoCultureInput) resourceInfoCultureInput.value = activityData.resourceTable.infoCulture || '';
+
+                renderMainActivities();
+            }
+
+            // AI 출력 정리 함수
+            function cleanAiOutput(text) {
+                if (!text) return '';
+                
+                text = text.trim();
+                text = text.replace(/^[\s\t]*[-*#]+\s*/gm, '');
+                text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
+                text = text.replace(/(\*|_)(.*?)\1/g, '$2');
+                text = text.replace(/<[^>]*>/g, '');
+
+                const lines = text.split('\n');
+                let formattedHtml = '';
+                let currentParagraphContent = '';
+
+                const boldSectionHeaders = [
+                    '설명:', '준비물:', '활동 방법:', '기대 효과:', '실행 가능:', '참고 사항:', '내용:', '연계 포인트:', '추가 팁:'
+                ];
+
+                const flushParagraph = () => {
+                    if (currentParagraphContent.trim() !== '') {
+                        formattedHtml += `<p>${currentParagraphContent.trim()}</p>`;
+                        currentParagraphContent = '';
+                    }
+                };
+
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i].trim();
+
+                    if (line === '') {
+                        flushParagraph();
+                        if (formattedHtml !== '' && !formattedHtml.endsWith('<br><br>')) {
+                            formattedHtml += '<br><br>';
+                        }
+                        continue;
+                    }
+
+                    const numberedItemMatch = line.match(/^(\d+\.\s)(.+)/);
+                    if (numberedItemMatch) {
+                        flushParagraph();
+                        formattedHtml += `<p>${line}</p>`;
+                        formattedHtml += '<br><br>';
+                        currentParagraphContent = '';
+                        continue;
+                    }
+
+                    let isBoldSectionHeader = false;
+                    let headerText = '';
+                    for (const header of boldSectionHeaders) {
+                        if (line.startsWith(header)) {
+                            isBoldSectionHeader = true;
+                            headerText = header;
+                            break;
+                        }
+                    }
+
+                    if (isBoldSectionHeader) {
+                        flushParagraph();
+                        const contentAfterHeader = line.substring(headerText.length).trim();
+                        formattedHtml += `<p><strong>${headerText}</strong>`;
+                        if (contentAfterHeader) {
+                            formattedHtml += ` ${contentAfterHeader}`;
+                        }
+                        formattedHtml += '</p>';
+                        formattedHtml += '<br><br>';
+                        currentParagraphContent = '';
+                    } else {
+                        if (currentParagraphContent !== '') {
+                            currentParagraphContent += '<br>';
+                        }
+                        currentParagraphContent += line;
+                    }
+                }
+
+                flushParagraph();
+                formattedHtml = formattedHtml.replace(/(<br>){3,}/g, '<br><br>');
+                formattedHtml = formattedHtml.replace(/<p><br>/g, '<p>');
+                formattedHtml = formattedHtml.replace(/<br><\/p>/g, '</p>');
+                formattedHtml = formattedHtml.replace(/<p>\s*<\/p>/g, '');
+
+                return formattedHtml;
+            }
+
+            // Gemini API 호출 함수
+            async function callGeminiAPI(prompt, spinnerElement, outputElement, buttonElement) {
+                if (!CURRENT_API_KEY) {
+                    if (outputElement) {
+                        outputElement.classList.remove('hidden');
+                        outputElement.innerHTML = '<p class="text-red-600">API 키가 설정되지 않았습니다. 우측 상단의 🔑 버튼을 클릭하여 API 키를 먼저 설정해주세요.</p>';
+                    }
+                    return;
+                }
+
+                if (spinnerElement) spinnerElement.classList.remove('hidden');
+                if (buttonElement) buttonElement.disabled = true;
+                if (outputElement) {
+                    outputElement.classList.add('hidden');
+                    outputElement.innerHTML = '';
+                }
+
+                try {
+                    const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${CURRENT_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 1024,
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        if (outputElement) {
+                            outputElement.innerHTML = `<h4 class="font-bold mb-2">✨ 제안된 내용:</h4>${cleanAiOutput(text)}`;
+                            outputElement.classList.remove('hidden');
+                        }
+                    } else {
+                        if (outputElement) {
+                            outputElement.innerHTML = '<p class="text-red-600">응답을 생성하는 데 실패했습니다. API 키가 올바른지 확인하고 다시 시도해주세요.</p>';
+                            outputElement.classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('API 호출 오류:', error);
+                    let errorMessage = '네트워크 오류 또는 API 호출 실패';
+                    if (error.message.includes('401') || error.message.includes('403')) {
+                        errorMessage = 'API 키가 올바르지 않거나 권한이 없습니다. API 키를 다시 확인해주세요.';
+                    }
+                    if (outputElement) {
+                        outputElement.innerHTML = `<p class="text-red-600">${errorMessage}: ${error.message}</p>`;
+                        outputElement.classList.remove('hidden');
+                    }
+                } finally {
+                    if (spinnerElement) spinnerElement.classList.add('hidden');
+                    if (buttonElement) buttonElement.disabled = false;
+                }
+            }
+
+            // AI 기능 버튼들
+            const suggestIdeasBtn = document.getElementById('suggest-ideas-btn');
+            if (suggestIdeasBtn) {
+                suggestIdeasBtn.addEventListener('click', async () => {
+                    const resourceInput = document.getElementById('resource-input');
+                    const gradeSelectStep1 = document.getElementById('grade-select-step1');
+                    const suggestedIdeasOutput = document.getElementById('suggested-ideas-output');
+                    const suggestIdeasSpinner = document.getElementById('suggest-ideas-spinner');
+
+                    const resource = resourceInput?.value.trim() || '';
+                    const grade = gradeSelectStep1?.value.trim() || '';
+
+                    if (!grade || !resource) {
+                        if (suggestedIdeasOutput) {
+                            suggestedIdeasOutput.classList.remove('hidden');
+                            suggestedIdeasOutput.innerHTML = '<p class="text-red-600">학년과 지역 자원을 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 이 학습 주제를 더 흥미롭고 깊이 있게 확장할 수 있는 아이디어를 2-3가지 번호 매겨 제안해주세요.`;
+                    await callGeminiAPI(prompt, expandTopicSpinner, expandedTopicOutput, expandTopicBtn);
+                });
+            }
+
+            const suggestObjectivesBtn = document.getElementById('suggest-objectives-btn');
+            if (suggestObjectivesBtn) {
+                suggestObjectivesBtn.addEventListener('click', async () => {
+                    const gradeSelect = document.getElementById('grade-select');
+                    const resourceInput = document.getElementById('resource-input');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const suggestedObjectivesOutput = document.getElementById('suggested-objectives-output');
+                    const suggestObjectivesSpinner = document.getElementById('suggest-objectives-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const resource = resourceInput?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
+
+                    if (!grade || !resource || !curriculumTopic) {
+                        if (suggestedObjectivesOutput) {
+                            suggestedObjectivesOutput.classList.remove('hidden');
+                            suggestedObjectivesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 때, 달성할 수 있는 구체적인 학습 목표 3가지를 다음 순서대로 작성해주세요. 1. (미적 체험) 2. (표현) 3. (감상). 각 목표는 '~할 수 있다.' 형식이어야 합니다.`;
+                    await callGeminiAPI(prompt, suggestObjectivesSpinner, suggestedObjectivesOutput, suggestObjectivesBtn);
+                });
+            }
+
+            const expandLearningActivityBtn = document.getElementById('expand-learning-activity-btn');
+            if (expandLearningActivityBtn) {
+                expandLearningActivityBtn.addEventListener('click', async () => {
+                    const gradeSelect = document.getElementById('grade-select');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                    const expandedLearningActivityOutput = document.getElementById('expanded-learning-activity-output');
+                    const expandLearningActivitySpinner = document.getElementById('expand-learning-activity-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
+                    const learningObjectives = learningObjectivesInput?.value.trim() || '';
+                    
+                    const intro = document.getElementById('activity-intro')?.value.trim() || '';
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup')?.value.trim() || '';
+
+                    if (!grade || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
+                        if (expandedLearningActivityOutput) {
+                            expandedLearningActivityOutput.classList.remove('hidden');
+                            expandedLearningActivityOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 현재 활동 내용은 다음과 같습니다: 도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}. 이 내용을 바탕으로 수업의 '전개' 부분에 들어갈 수 있는 구체적이고 다양한 학습 활동 아이디어를 3가지 번호 매겨 제안해주세요.`;
+                    await callGeminiAPI(prompt, expandLearningActivitySpinner, expandedLearningActivityOutput, expandLearningActivityBtn);
+                });
+            }
+
+            const expandExperienceBtn = document.getElementById('expand-experience-btn');
+            if (expandExperienceBtn) {
+                expandExperienceBtn.addEventListener('click', async () => {
+                    const gradeSelect = document.getElementById('grade-select');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const resourceInput = document.getElementById('resource-input');
+                    const expandedExperienceOutput = document.getElementById('expanded-experience-output');
+                    const expandExperienceSpinner = document.getElementById('expand-experience-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
+                    const resource = resourceInput?.value.trim() || '';
+                    
+                    const intro = document.getElementById('activity-intro')?.value.trim() || '';
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup')?.value.trim() || '';
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !resource || !curriculumTopic || (!intro && !mainContents && !wrapup)) {
+                        if (expandedExperienceOutput) {
+                            expandedExperienceOutput.classList.remove('hidden');
+                            expandedExperienceOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 활동 내용을 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 활동 내용은 다음과 같습니다: ${activitySummary}. 이 활동 내용을 기반으로 해당 지역에서 실제로 존재할 가능성이 높고 현실적으로 실행 가능한 외부 체험 활동 아이디어를 2-3가지 번호 매겨 제안해주세요.`;
+                    await callGeminiAPI(prompt, expandExperienceSpinner, expandedExperienceOutput, expandExperienceBtn);
+                });
+            }
+
+            const suggestResourcesBtn = document.getElementById('suggest-resources-btn');
+            if (suggestResourcesBtn) {
+                suggestResourcesBtn.addEventListener('click', async () => {
+                    const gradeSelect = document.getElementById('grade-select');
+                    const resourceInput = document.getElementById('resource-input');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                    const suggestedResourcesOutput = document.getElementById('suggested-resources-output');
+                    const suggestResourcesSpinner = document.getElementById('suggest-resources-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const resource = resourceInput?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
+                    const learningObjectives = learningObjectivesInput?.value.trim() || '';
+                    
+                    const intro = document.getElementById('activity-intro')?.value.trim() || '';
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup')?.value.trim() || '';
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !resource || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
+                        if (suggestedResourcesOutput) {
+                            suggestedResourcesOutput.classList.remove('hidden');
+                            suggestedResourcesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 활동 내용은 다음과 같습니다: ${activitySummary}. 이 수업과 연관해서 활용할 수 있는 인적 자원, 물적 자원, 정보/문화 자원을 각각 1-2가지씩 구체적으로 추천해주세요.`;
+                    await callGeminiAPI(prompt, suggestResourcesSpinner, suggestedResourcesOutput, suggestResourcesBtn);
+                });
+            }
+
+            const suggestExpansionPlanBtn = document.getElementById('suggest-expansion-plan-btn');
+            if (suggestExpansionPlanBtn) {
+                suggestExpansionPlanBtn.addEventListener('click', async () => {
+                    const gradeSelect = document.getElementById('grade-select');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                    const effectInput = document.getElementById('effect-input');
+                    const suggestedExpansionPlanOutput = document.getElementById('suggested-expansion-plan-output');
+                    const suggestExpansionPlanSpinner = document.getElementById('suggest-expansion-plan-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
+                    const learningObjectives = learningObjectivesInput?.value.trim() || '';
+                    const expectedEffect = effectInput?.value.trim() || '';
+                    
+                    const intro = document.getElementById('activity-intro')?.value.trim() || '';
+                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
+                    const wrapup = document.getElementById('activity-wrapup')?.value.trim() || '';
+                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
+
+                    if (!grade || !curriculumTopic || !learningObjectives || !expectedEffect || (!intro && !mainContents && !wrapup)) {
+                        if (suggestedExpansionPlanOutput) {
+                            suggestedExpansionPlanOutput.classList.remove('hidden');
+                            suggestedExpansionPlanOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 기대 효과, 활동 내용을 모두 입력해주세요.</p>';
+                        }
+                        return;
+                    }
+
+                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 진행한 미술 수업의 확장 방안을 2-3가지 번호 매겨 제안해주세요. 학습 목표는 '${learningObjectives}'이고, 주요 활동은 다음과 같습니다: ${activitySummary}. 기대 효과는 '${expectedEffect}' 입니다.`;
+                    await callGeminiAPI(prompt, suggestExpansionPlanSpinner, suggestedExpansionPlanOutput, suggestExpansionPlanBtn);
+                });
+            }
+
+            // HTML 파일 생성을 위한 함수
+            function generateHtmlContent(data) {
                 let mainActivitiesHtml = '';
-                activityData.mainActivities.forEach((mainActivity, index) => {
-                    if (mainActivity.content.trim() !== '') {
-                        mainActivitiesHtml += `<li><strong>전개 (${index + 1}):</strong> ${mainActivity.content.replace(/\n/g, '<br>')}</li>`;
+                data.mainActivities.forEach((activity, index) => {
+                    if (activity.trim() !== '') {
+                        mainActivitiesHtml += `<li><strong>전개 (${index + 1}):</strong> ${activity.replace(/\n/g, '<br>')}</li>`;
                     }
                 });
                 if (mainActivitiesHtml === '') {
@@ -1004,13 +1403,25 @@
                 }
 
                 let resourceTableHtml = '';
-                if (activityData.resourceTable.human || activityData.resourceTable.material || activityData.resourceTable.infoCulture) {
+                if (data.resourceTable.human || data.resourceTable.material || data.resourceTable.infoCulture) {
                     resourceTableHtml = `
-                        <table>
-                            <tr><th>자원 유형</th><th>활용할 자원과 방법</th></tr>
-                            <tr><td>인적 자원</td><td>${activityData.resourceTable.human.replace(/\n/g, '<br>')}</td></tr>
-                            <tr><td>물적 자원</td><td>${activityData.resourceTable.material.replace(/\n/g, '<br>')}</td></tr>
-                            <tr><td>정보, 문화 자원</td><td>${activityData.resourceTable.infoCulture.replace(/\n/g, '<br>')}</td></tr>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                            <tr style="background-color: #f0f4f8;">
+                                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">자원 유형</th>
+                                <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">활용할 자원과 방법</th>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 12px;">인적 자원</td>
+                                <td style="border: 1px solid #ddd; padding: 12px;">${data.resourceTable.human.replace(/\n/g, '<br>')}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 12px;">물적 자원</td>
+                                <td style="border: 1px solid #ddd; padding: 12px;">${data.resourceTable.material.replace(/\n/g, '<br>')}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 12px;">정보, 문화 자원</td>
+                                <td style="border: 1px solid #ddd; padding: 12px;">${data.resourceTable.infoCulture.replace(/\n/g, '<br>')}</td>
+                            </tr>
                         </table>
                     `;
                 } else {
@@ -1018,8 +1429,8 @@
                 }
 
                 let tasteCompetenciesHtml = '';
-                if (activityData.tasteCompetencies.length > 0) {
-                    tasteCompetenciesHtml = `<ul>${activityData.tasteCompetencies.map(comp => `<li>${comp}</li>`).join('')}</ul>`;
+                if (data.tasteCompetencies && data.tasteCompetencies.length > 0) {
+                    tasteCompetenciesHtml = `<ul>${data.tasteCompetencies.map(comp => `<li>${comp}</li>`).join('')}</ul>`;
                 } else {
                     tasteCompetenciesHtml = '기록되지 않음';
                 }
@@ -1042,26 +1453,6 @@
                                 text-align: center; 
                                 margin-bottom: 30px; 
                             }
-                            h2 {
-                                color: #4A90E2;
-                                margin-top: 25px;
-                                margin-bottom: 15px;
-                                border-bottom: 2px solid #4A90E2;
-                                padding-bottom: 5px;
-                            }
-                            h3 {
-                                color: #333;
-                                font-size: 1.2em;
-                                margin-top: 20px;
-                                margin-bottom: 10px;
-                            }
-                            p.instruction {
-                                background-color: #e0f2f7;
-                                border-left: 5px solid #4A90E2;
-                                padding: 15px;
-                                margin-bottom: 20px;
-                                font-size: 0.95em;
-                            }
                             table { 
                                 width: 100%; 
                                 border-collapse: collapse; 
@@ -1077,7 +1468,7 @@
                             th { 
                                 background-color: #f0f4f8; 
                                 font-weight: bold; 
-                                width: 25%; /* Adjusted width for better readability */
+                                width: 25%;
                                 color: #334155;
                             }
                             td { 
@@ -1088,645 +1479,287 @@
                                 margin-left: 20px;
                                 padding-left: 0;
                             }
-                            ul ul { /* Nested lists */
-                                list-style-type: circle;
-                                margin-left: 20px;
-                            }
-                            .note {
-                                font-size: 0.85em;
-                                color: #666;
-                                margin-top: 30px;
-                                text-align: center;
-                            }
                         </style>
                     </head>
                     <body>
                         <h1>미술 수업 계획안</h1>
-                        <p class="instruction">
-                            ${instructionMessage}
-                        </p>
                         
                         <table>
-                            <tr><th>학년</th><td>${grade}</td></tr>
-                            <tr><th>동네 자원</th><td>${resource}</td></tr>
-                            <tr><th>학습 주제</th><td>${curriculumTopic.replace(/\n/g, '<br>')}</td></tr>
-                            <tr><th>학습 목표</th><td>${learningObjectives.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>학년</th><td>${data.grade}</td></tr>
+                            <tr><th>동네 자원</th><td>${data.resource}</td></tr>
+                            <tr><th>학습 주제</th><td>${data.curriculumTopic.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>학습 목표</th><td>${data.learningObjectives.replace(/\n/g, '<br>')}</td></tr>
                             <tr><th>핵심 역량</th><td>${tasteCompetenciesHtml}</td></tr>
-                            <tr><th>주요 활동 (도입)</th><td>${activityIntro.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>주요 활동 (도입)</th><td>${data.activityIntro.replace(/\n/g, '<br>')}</td></tr>
                             <tr><th>주요 활동 (전개)</th><td><ul>${mainActivitiesHtml}</ul></td></tr>
-                            <tr><th>주요 활동 (정리)</th><td>${activityWrapup.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>주요 활동 (정리)</th><td>${data.activityWrapup.replace(/\n/g, '<br>')}</td></tr>
                             <tr><th>활용할 자원</th><td>${resourceTableHtml}</td></tr>
-                            <tr><th>체험 활동</th><td>${recordedExperienceContent.replace(/\n/g, '<br>')}</td></tr>
-                            <tr><th>기대 효과</th><td>${expectedEffect.replace(/\n/g, '<br>')}</td></tr>
-                            <tr><th>확장 방안</th><td>${expansionPlan.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>체험 활동</th><td>${data.recordedExperience.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>기대 효과</th><td>${data.expectedEffect.replace(/\n/g, '<br>')}</td></tr>
+                            <tr><th>확장 방안</th><td>${data.expansionPlan.replace(/\n/g, '<br>')}</td></tr>
                         </table>
-                        <p class="note">이 문서는 Google 문서로의 쉬운 이동을 위해 HTML 형식으로 제공됩니다.</p>
+                        
+                        <p style="font-size: 0.85em; color: #666; margin-top: 30px; text-align: center;">
+                            이 문서는 미술교과 기반 지역연계 학교예술교육 워크숍에서 생성되었습니다.
+                        </p>
                     </body>
                     </html>
                 `;
             }
 
+            // 파일 다운로드 함수
+            function downloadHtmlFile(content, filename) {
+                const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // 수업 설계 완료 버튼
+            const finishBtn = document.getElementById('finish-btn');
+            const summaryView = document.getElementById('summary-view');
+            const saveToGoogleDriveBtn = document.getElementById('save-to-google-drive-btn');
+
             if (finishBtn) {
-                finishBtn.addEventListener('click', () => {
-                // Save all current inputs before showing summary
-                saveActivityInputs();
+                finishBtn.addEventListener('click', async () => {
+                    try {
+                        saveActivityInputs();
 
-                const resource = document.getElementById('resource-input').value || '기록되지 않음';
-                const grade = document.getElementById('grade-select').value || '선택 안 됨';
-                
-                const curriculumInput = document.getElementById('curriculum-input');
-                const curriculumTopic = curriculumInput ? curriculumInput.value : '기록되지 않음';
-                const learningObjectivesInput = document.getElementById('learning-objectives-input');
-                const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value : '기록되지 않음';
-                
-                // Use the stored activityData for summary display
-                const activityIntro = activityData.intro;
-                const activityWrapup = activityData.wrapup;
-                const recordedExperienceContent = activityData.recordedExperience;
-                const expectedEffectInput = document.getElementById('effect-input');
-                const expectedEffect = expectedEffectInput ? expectedEffectInput.value : '기록되지 않음';
-                const expansionPlanInput = document.getElementById('expansion-plan-input');
-                const expansionPlan = expansionPlanInput ? expansionPlanInput.value : '기록되지 않음';
+                        const resourceInput = document.getElementById('resource-input');
+                        const gradeSelect = document.getElementById('grade-select');
+                        const curriculumInput = document.getElementById('curriculum-input');
+                        const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                        const effectInput = document.getElementById('effect-input');
+                        const expansionPlanInput = document.getElementById('expansion-plan-input');
 
-                let mainActivitiesSummary = '';
-                activityData.mainActivities.forEach((mainActivity, index) => {
-                    if (mainActivity.content.trim() !== '') {
-                        mainActivitiesSummary += `<li><strong>전개 (${index + 1}):</strong> ${mainActivity.content || '-'}</li>`;
-                    }
-                });
-                if (mainActivitiesSummary === '') {
-                    mainActivitiesSummary = '<li>기록되지 않음</li>';
-                }
+                        const resource = resourceInput?.value || '기록되지 않음';
+                        const grade = gradeSelect?.value || '선택 안 됨';
+                        const curriculumTopic = curriculumInput?.value || '기록되지 않음';
+                        const learningObjectives = learningObjectivesInput?.value || '기록되지 않음';
+                        const expectedEffect = effectInput?.value || '기록되지 않음';
+                        const expansionPlan = expansionPlanInput?.value || '기록되지 않음';
 
-                let resourceTableSummary = '';
-                if (activityData.resourceTable.human || activityData.resourceTable.material || activityData.resourceTable.infoCulture) {
-                    resourceTableSummary = `
-                        <ul class="list-disc list-inside space-y-1">
-                            <li><strong>인적 자원:</strong> ${activityData.resourceTable.human || '-'}</li>
-                            <li><strong>물적 자원:</strong> ${activityData.resourceTable.material || '-'}</li>
-                            <li><strong>정보, 문화 자원:</strong> ${activityData.resourceTable.infoCulture || '-'}</li>
-                        </ul>
-                    `;
-                } else {
-                    resourceTableSummary = '기록되지 않음';
-                }
+                        const activityIntro = activityData.intro;
+                        const activityWrapup = activityData.wrapup;
+                        const recordedExperienceContent = activityData.recordedExperience;
 
-                let tasteCompetenciesSummary = '';
-                if (activityData.tasteCompetencies.length > 0) {
-                    tasteCompetenciesSummary = activityData.tasteCompetencies.map(comp => `${comp}`).join(', ');
-                } else {
-                    tasteCompetenciesSummary = '기록되지 않음';
-                }
+                        let mainActivitiesSummary = '';
+                        activityData.mainActivities.forEach((mainActivity, index) => {
+                            if (mainActivity.content.trim() !== '') {
+                                mainActivitiesSummary += `<li><strong>전개 (${index + 1}):</strong> ${mainActivity.content || '-'}</li>`;
+                            }
+                        });
+                        if (mainActivitiesSummary === '') {
+                            mainActivitiesSummary = '<li>기록되지 않음</li>';
+                        }
 
-                // 안전하게 summary 요소들 업데이트
-                const summaryElements = {
-                    'summary-grade': grade,
-                    'summary-resource': resource,
-                    'summary-curriculum': curriculumTopic,
-                    'summary-objectives': learningObjectives,
-                    'summary-activity-intro': activityIntro,
-                    'summary-activity-wrapup': activityWrapup,
-                    'summary-experience': recordedExperienceContent,
-                    'summary-effect': expectedEffect,
-                    'summary-expansion-plan': expansionPlan,
-                    'summary-taste-competencies': tasteCompetenciesSummary
-                };
+                        let resourceTableSummary = '';
+                        if (activityData.resourceTable.human || activityData.resourceTable.material || activityData.resourceTable.infoCulture) {
+                            resourceTableSummary = `
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li><strong>인적 자원:</strong> ${activityData.resourceTable.human || '-'}</li>
+                                    <li><strong>물적 자원:</strong> ${activityData.resourceTable.material || '-'}</li>
+                                    <li><strong>정보, 문화 자원:</strong> ${activityData.resourceTable.infoCulture || '-'}</li>
+                                </ul>
+                            `;
+                        } else {
+                            resourceTableSummary = '기록되지 않음';
+                        }
 
-                Object.keys(summaryElements).forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.textContent = summaryElements[id];
-                    }
-                });
+                        let tasteCompetenciesSummary = '';
+                        if (activityData.tasteCompetencies.length > 0) {
+                            tasteCompetenciesSummary = activityData.tasteCompetencies.join(', ');
+                        } else {
+                            tasteCompetenciesSummary = '기록되지 않음';
+                        }
 
-                // HTML 내용이 필요한 요소들 별도 처리
-                const summaryActivityMain = document.getElementById('summary-activity-main');
-                if (summaryActivityMain) {
-                    summaryActivityMain.innerHTML = mainActivitiesSummary;
-                }
+                        // 요약 표시
+                        const summaryElements = {
+                            'summary-grade': grade,
+                            'summary-resource': resource,
+                            'summary-curriculum': curriculumTopic,
+                            'summary-objectives': learningObjectives,
+                            'summary-activity-intro': activityIntro,
+                            'summary-activity-wrapup': activityWrapup,
+                            'summary-experience': recordedExperienceContent,
+                            'summary-effect': expectedEffect,
+                            'summary-expansion-plan': expansionPlan,
+                            'summary-taste-competencies': tasteCompetenciesSummary
+                        };
 
-                const summaryResourceTable = document.getElementById('summary-resource-table');
-                if (summaryResourceTable) {
-                    summaryResourceTable.innerHTML = resourceTableSummary;
-                }
+                        Object.keys(summaryElements).forEach(id => {
+                            const element = document.getElementById(id);
+                            if (element) {
+                                element.textContent = summaryElements[id];
+                            }
+                        });
 
-                workshopSteps.forEach(step => step.classList.add('hidden'));
-                if (summaryView) {
-                    summaryView.classList.remove('hidden');
-                }
-                
-                stepIndicators.forEach(indicator => indicator.classList.remove('active'));
-                
-                const messageBox = document.createElement('div');
-                messageBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                messageBox.innerHTML = `
-                    <div class="bg-white p-8 rounded-lg shadow-xl text-center">
-                        <h4 class="text-2xl font-bold mb-4">🎉 수업 설계가 완료되었습니다!</h4>
-                        <p class="text-gray-700 mb-6">아래에서 초안을 확인하고 Google 문서로 저장할 수 있습니다.</p>
-                        <button id="close-message-box" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">확인</button>
-                    </div>
-                `;
-                document.body.appendChild(messageBox);
-                
-                // messageBox가 DOM에 추가된 후 이벤트 리스너 등록
-                const closeBtn = document.getElementById('close-message-box');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => {
-                        document.body.removeChild(messageBox);
-                    });
-                }
+                        const summaryActivityMain = document.getElementById('summary-activity-main');
+                        if (summaryActivityMain) {
+                            summaryActivityMain.innerHTML = mainActivitiesSummary;
+                        }
+
+                        const summaryResourceTable = document.getElementById('summary-resource-table');
+                        if (summaryResourceTable) {
+                            summaryResourceTable.innerHTML = resourceTableSummary;
+                        }
+
+                        workshopSteps.forEach(step => step.classList.add('hidden'));
+                        if (summaryView) {
+                            summaryView.classList.remove('hidden');
+                        }
+                        
+                        stepIndicators.forEach(indicator => indicator.classList.remove('active'));
+                        
+                        // 완료 메시지
+                        const messageBox = document.createElement('div');
+                        messageBox.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                        messageBox.innerHTML = `
+                            <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+                                <h4 class="text-2xl font-bold mb-4">🎉 수업 설계가 완료되었습니다!</h4>
+                                <p class="text-gray-700 mb-6">아래에서 초안을 확인하고 HTML 파일로 저장할 수 있습니다.</p>
+                                <button id="close-message-box" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">확인</button>
+                            </div>
+                        `;
+                        document.body.appendChild(messageBox);
+                        
+                        const closeBtn = document.getElementById('close-message-box');
+                        if (closeBtn) {
+                            closeBtn.addEventListener('click', () => {
+                                document.body.removeChild(messageBox);
+                            });
+                        }
+
                     } catch (error) {
                         console.error('수업 설계 완료 처리 중 오류 발생:', error);
                         alert('수업 설계 완료 처리 중 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
                     }
-            });
-        }
-
-            if (saveToGoogleDriveBtn) {
-                saveToGoogleDriveBtn.addEventListener('click', () => {
-                const instructionMessage = `
-                    <strong>Google 문서로 가져오는 방법:</strong><br>
-                    1. 이 페이지의 모든 내용(Ctrl+A 또는 Cmd+A)을 선택한 후 복사(Ctrl+C 또는 Cmd+C)하세요.<br>
-                    2. 새 Google 문서(<a href="https://docs.new" target="_blank" style="color: #1a73e8; text-decoration: underline;">docs.new</a>)를 열고 복사한 내용을 붙여넣기(Ctrl+V 또는 Cmd+V) 하세요.<br>
-                    3. Google 문서에서 '파일' > '사본 만들기'를 선택하여 본인 드라이브에 저장하세요.
-                `;
-                const newWindow = window.open();
-                newWindow.document.write(generateGoogleDocContent(instructionMessage));
-                newWindow.document.close();
-            });
-        }
-
-            // Reset App Functionality
-            const resetAppBtn = document.getElementById('reset-app-btn');
-            if (resetAppBtn) {
-                resetAppBtn.addEventListener('click', () => {
-                    // Clear all textareas and selects
-                    document.querySelectorAll('textarea').forEach(textarea => textarea.value = '');
-                    document.querySelectorAll('select').forEach(select => select.value = '');
-                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false); // Clear checkboxes
-                    
-                    // Clear all output divs
-                    document.querySelectorAll('[id$="-output"]').forEach(div => {
-                        div.innerHTML = '';
-                        div.classList.add('hidden');
-                    });
-
-                    // Reset activityData
-                    activityData.intro = '';
-                    activityData.mainActivities = [{ content: '' }]; // Reset to one empty main activity
-                    activityData.wrapup = '';
-                    activityData.recordedExperience = '';
-                    activityData.resourceTable = { human: '', material: '', infoCulture: '' };
-                    activityData.tasteCompetencies = [];
-
-                    // Re-render main activities to show only one empty field
-                    renderMainActivities();
-
-                    // Reset current step
-                    currentStepIndex = 0;
-                    updateWorkshopView();
-
-                    // Hide summary view
-                    summaryView.classList.add('hidden');
-
-                    // Reset selected resource display
-                    document.getElementById('selected-resource-display').textContent = '입력된 자원 없음';
-
-                    // Reset the first step indicator to active
-                    stepIndicators.forEach((indicator, index) => {
-                        if (index === 0) {
-                            indicator.classList.add('active');
-                        } else {
-                            indicator.classList.remove('active');
-                        }
-                    });
                 });
             }
 
-            // Helper function to clean AI output
-            function cleanAiOutput(text) {
-                // Remove leading/trailing whitespace
-                text = text.trim();
-                // Remove common markdown list prefixes and bold/italic markers first
-                text = text.replace(/^[\s\t]*[-*#]+\s*/gm, ''); // Remove -, *, # at line start
-                text = text.replace(/(\*\*|__)(.*?)\1/g, '$2'); // Remove bold **text**
-                text = text.replace(/(\*|_)(.*?)\1/g, '$2'); // Remove italic *text*
-                // Remove any remaining HTML tags (like <a>) that might have slipped through or been generated
-                text = text.replace(/<[^>]*>/g, '');
+            // HTML 파일 저장 버튼
+            if (saveToGoogleDriveBtn) {
+                saveToGoogleDriveBtn.addEventListener('click', () => {
+                    const resourceInput = document.getElementById('resource-input');
+                    const gradeSelect = document.getElementById('grade-select');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const learningObjectivesInput = document.getElementById('learning-objectives-input');
+                    const effectInput = document.getElementById('effect-input');
+                    const expansionPlanInput = document.getElementById('expansion-plan-input');
 
-                const lines = text.split('\n');
-                let formattedHtml = '';
-                let currentParagraphContent = '';
+                    const data = {
+                        grade: gradeSelect?.value || '선택 안 됨',
+                        resource: resourceInput?.value || '기록되지 않음',
+                        curriculumTopic: curriculumInput?.value || '기록되지 않음',
+                        learningObjectives: learningObjectivesInput?.value || '기록되지 않음',
+                        tasteCompetencies: activityData.tasteCompetencies,
+                        activityIntro: activityData.intro,
+                        mainActivities: activityData.mainActivities.map(item => item.content),
+                        activityWrapup: activityData.wrapup,
+                        resourceTable: activityData.resourceTable,
+                        recordedExperience: activityData.recordedExperience,
+                        expectedEffect: effectInput?.value || '기록되지 않음',
+                        expansionPlan: expansionPlanInput?.value || '기록되지 않음'
+                    };
 
-                // Patterns for headers that should start a new logical block and be bolded
-                const boldSectionHeaders = [
-                    '설명:', '준비물:', '활동 방법:', '기대 효과:', '실행 가능:', '참고 사항:', '내용:', '연계 포인트:', '추가 팁:'
-                ];
-
-                const flushParagraph = () => {
-                    if (currentParagraphContent.trim() !== '') {
-                        formattedHtml += `<p>${currentParagraphContent.trim()}</p>`;
-                        currentParagraphContent = '';
-                    }
-                };
-
-                for (let i = 0; i < lines.length; i++) {
-                    let line = lines[i].trim();
-
-                    if (line === '') {
-                        flushParagraph(); // Flush current content as a paragraph
-                        // Add a double break if there was content before this empty line
-                        if (formattedHtml !== '' && !formattedHtml.endsWith('<br><br>')) {
-                            formattedHtml += '<br><br>';
-                        }
-                        continue;
-                    }
-
-                    let isNumberedItem = false;
-                    let isBoldSectionHeader = false;
-                    let headerText = ''; // Stores the text that should be bolded if it's a specific header
-
-                    // Check for numbered items (e.g., "1. 활동명:", "1. (미적 체험) ")
-                    const numberedItemMatch = line.match(/^(\d+\.\s)(.+)/);
-                    if (numberedItemMatch) {
-                        isNumberedItem = true;
-                        flushParagraph(); // Flush any preceding content as a paragraph
-                        // Numbered items are always plain text, followed by double break
-                        formattedHtml += `<p>${line}</p>`; // Just add the line as a paragraph
-                        formattedHtml += '<br><br>'; // Add double break after it
-                        currentParagraphContent = ''; // Reset for next line
-                        continue; // Move to next line
-                    }
-
-                    // Check for explicit bold section headers
-                    for (const header of boldSectionHeaders) {
-                        if (line.startsWith(header)) {
-                            isBoldSectionHeader = true;
-                            headerText = header; // Store the header string itself
-                            break;
-                        }
-                    }
-
-                    if (isBoldSectionHeader) {
-                        flushParagraph(); // Flush any preceding content as a paragraph
-
-                        // Add the bolded header and its immediate content
-                        const contentAfterHeader = line.substring(headerText.length).trim();
-                        formattedHtml += `<p><strong>${headerText}</strong>`;
-                        if (contentAfterHeader) { // Only add content if it exists after the header
-                            formattedHtml += ` ${contentAfterHeader}`;
-                        }
-                        formattedHtml += '</p>'; // Close the header paragraph
-
-                        formattedHtml += '<br><br>'; // Add a double break after the header paragraph
-                        currentParagraphContent = ''; // Ensure next line starts fresh
-                    } else {
-                        // Regular content line, append to current paragraph content
-                        if (currentParagraphContent !== '') {
-                            currentParagraphContent += '<br>'; // Single line break within paragraph
-                        }
-                        currentParagraphContent += line;
-                    }
-                }
-
-                flushParagraph(); // Flush any remaining content at the end
-
-                // Final cleanup for redundant breaks
-                formattedHtml = formattedHtml.replace(/(<br>){3,}/g, '<br><br>'); // Max two breaks
-                formattedHtml = formattedHtml.replace(/<p><br>/g, '<p>'); // Remove <br> immediately after <p>
-                formattedHtml = formattedHtml.replace(/<br><\/p>/g, '</p>'); // Remove <br> immediately before </p>
-                formattedHtml = formattedHtml.replace(/<p>\s*<\/p>/g, ''); // Remove empty <p> tags
-
-                return formattedHtml;
+                    const htmlContent = generateHtmlContent(data);
+                    const filename = `미술수업계획안_${new Date().toISOString().slice(0, 10)}.html`;
+                    downloadHtmlFile(htmlContent, filename);
+                });
             }
 
-            // Define the Gemini API endpoint
-            const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+            // 초기화 버튼
+            const resetAppBtn = document.getElementById('reset-app-btn');
+            if (resetAppBtn) {
+                resetAppBtn.addEventListener('click', () => {
+                    if (confirm('모든 입력 내용이 삭제됩니다. 계속하시겠습니까?')) {
+                        // 모든 입력 필드 초기화
+                        document.querySelectorAll('textarea').forEach(textarea => textarea.value = '');
+                        document.querySelectorAll('select').forEach(select => select.value = '');
+                        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+                        
+                        // 모든 출력 div 초기화
+                        document.querySelectorAll('[id$="-output"]').forEach(div => {
+                            div.innerHTML = '';
+                            div.classList.add('hidden');
+                        });
 
-            // Generic function to call Gemini API directly
-            async function callGeminiAPI(prompt, spinnerElement, outputElement, buttonElement) {
-                if (!CURRENT_API_KEY || CURRENT_API_KEY === "") {
-                    outputElement.classList.remove('hidden');
-                    outputElement.innerHTML = '<p class="text-red-600">API 키가 설정되지 않았습니다. 상단에서 Gemini API 키를 먼저 설정해주세요.</p>';
-                    return;
-                }
+                        // activityData 초기화
+                        activityData.intro = '';
+                        activityData.mainActivities = [{ content: '' }];
+                        activityData.wrapup = '';
+                        activityData.recordedExperience = '';
+                        activityData.resourceTable = { human: '', material: '', infoCulture: '' };
+                        activityData.tasteCompetencies = [];
 
-                if (spinnerElement) spinnerElement.classList.remove('hidden');
-                if (buttonElement) buttonElement.disabled = true;
-                outputElement.classList.add('hidden');
-                outputElement.innerHTML = '';
+                        // 메인 활동 재렌더링
+                        renderMainActivities();
 
-                try {
-                    const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                    const payload = { contents: chatHistory };
+                        // 현재 단계 초기화
+                        currentStepIndex = 0;
+                        updateWorkshopView();
 
-                    const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${CURRENT_API_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                        // 요약 뷰 숨기기
+                        if (summaryView) {
+                            summaryView.classList.add('hidden');
+                        }
 
-                    const result = await response.json();
+                        // 선택된 자원 표시 초기화
+                        const resourceDisplay = document.getElementById('selected-resource-display');
+                        if (resourceDisplay) {
+                            resourceDisplay.textContent = '입력된 자원 없음';
+                        }
 
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const text = result.candidates[0].content.parts[0].text; // Get raw text from AI
-                        outputElement.innerHTML = `<h4 class="font-bold mb-2">✨ 제안된 내용:</h4>${cleanAiOutput(text)}`; // Pass to cleanAiOutput
-                        outputElement.classList.remove('hidden');
-                    } else {
-                        outputElement.innerHTML = '<p class="text-red-600">응답을 생성하는 데 실패했습니다. API 키가 올바른지 확인하고 다시 시도해주세요.</p>';
-                        outputElement.classList.remove('hidden');
+                        // 첫 번째 단계 표시기 활성화
+                        stepIndicators.forEach((indicator, index) => {
+                            if (index === 0) {
+                                indicator.classList.add('active');
+                            } else {
+                                indicator.classList.remove('active');
+                            }
+                        });
                     }
-                } catch (error) {
-                    let errorMessage = '네트워크 오류 또는 API 호출 실패';
-                    if (error.message.includes('401') || error.message.includes('403')) {
-                        errorMessage = 'API 키가 올바르지 않거나 권한이 없습니다. API 키를 다시 확인해주세요.';
-                    }
-                    outputElement.innerHTML = `<p class="text-red-600">${errorMessage}: ${error.message}</p>`;
-                    outputElement.classList.remove('hidden');
-                } finally {
-                    if (spinnerElement) spinnerElement.classList.add('hidden');
-                    if (buttonElement) buttonElement.disabled = false;
-                }
+                });
             }
 
-            // Gemini API Integration - Suggest Ideas (Step 1)
-            const suggestIdeasBtn = document.getElementById('suggest-ideas-btn');
-            const resourceInput = document.getElementById('resource-input');
-            const gradeSelectStep1 = document.getElementById('grade-select-step1'); // Grade select for step 1
-            const suggestedIdeasOutput = document.getElementById('suggested-ideas-output');
-            const suggestIdeasSpinner = suggestIdeasBtn ? suggestIdeasBtn.querySelector('.loading-spinner') : null;
-
-            if (suggestIdeasBtn) {
-                suggestIdeasBtn.addEventListener('click', async () => {
-                    const resource = resourceInput.value.trim();
-                    const grade = gradeSelectStep1.value.trim(); // Get grade from step 1 dropdown
-
-                    if (!grade || !resource) {
-                        suggestedIdeasOutput.classList.remove('hidden');
-                        suggestedIdeasOutput.innerHTML = '<p class="text-red-600">학년과 지역 자원을 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 다음 지역 자원 '${resource}'을 활용한 창의적인 미술 활동 아이디어 3가지를 번호 매겨 제안해주세요. 각 아이디어는 활동명과 간단한 설명을 포함해야 합니다.`;
+            // 초기 설정
+            disableAiButtons();
+            renderMainActivities();
+            updateWorkshopView();
+            
+            console.log('모든 이벤트 리스너가 등록되었습니다.');
+        });
+    </script>
+</body>
+</html>학생들이 다음 지역 자원 '${resource}'을 활용한 창의적인 미술 활동 아이디어 3가지를 번호 매겨 제안해주세요. 각 아이디어는 활동명과 간단한 설명을 포함해야 합니다.`;
                     await callGeminiAPI(prompt, suggestIdeasSpinner, suggestedIdeasOutput, suggestIdeasBtn);
                 });
             }
 
-            // Gemini API Integration - Expand Topic (Step 2)
             const expandTopicBtn = document.getElementById('expand-topic-btn');
-            const gradeSelect = document.getElementById('grade-select');
-            const curriculumInput = document.getElementById('curriculum-input');
-            const expandedTopicOutput = document.getElementById('expanded-topic-output');
-            const expandTopicSpinner = expandTopicBtn ? expandTopicBtn.querySelector('.loading-spinner') : null;
-
             if (expandTopicBtn) {
                 expandTopicBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect.value.trim();
-                    const resource = resourceInput.value.trim();
-                    const curriculumTopic = curriculumInput.value.trim();
+                    const gradeSelect = document.getElementById('grade-select');
+                    const resourceInput = document.getElementById('resource-input');
+                    const curriculumInput = document.getElementById('curriculum-input');
+                    const expandedTopicOutput = document.getElementById('expanded-topic-output');
+                    const expandTopicSpinner = document.getElementById('expand-topic-spinner');
+
+                    const grade = gradeSelect?.value.trim() || '';
+                    const resource = resourceInput?.value.trim() || '';
+                    const curriculumTopic = curriculumInput?.value.trim() || '';
 
                     if (!grade || !resource || !curriculumTopic) {
-                        expandedTopicOutput.classList.remove('hidden');
-                        expandedTopicOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
+                        if (expandedTopicOutput) {
+                            expandedTopicOutput.classList.remove('hidden');
+                            expandedTopicOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
+                        }
                         return;
                     }
 
-                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 이 학습 주제를 더 흥미롭고 깊이 있게 확장할 수 있는 아이디어를 2-3가지 번호 매겨 제안해주세요. 예를 들어, 다른 교과와의 융합, 사회적 이슈와의 연계, 또는 학생들의 참여를 높일 수 있는 방향 등을 포함해주세요.`;
-                    await callGeminiAPI(prompt, expandTopicSpinner, expandedTopicOutput, expandTopicBtn);
-                });
-            }
-
-            // Gemini API Integration - Suggest Learning Objectives (Step 2)
-            const suggestObjectivesBtn = document.getElementById('suggest-objectives-btn');
-            const learningObjectivesInput = document.getElementById('learning-objectives-input');
-            const suggestedObjectivesOutput = document.getElementById('suggested-objectives-output');
-            const suggestObjectivesSpinner = suggestObjectivesBtn ? suggestObjectivesBtn.querySelector('.loading-spinner') : null;
-
-            if (suggestObjectivesBtn) {
-                suggestObjectivesBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect.value.trim();
-                    const resource = resourceInput.value.trim();
-                    const curriculumTopic = curriculumInput.value.trim();
-
-                    if (!grade || !resource || !curriculumTopic) {
-                        suggestedObjectivesOutput.classList.remove('hidden');
-                        suggestedObjectivesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제를 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 때, 달성할 수 있는 구체적인 학습 목표 3가지를 다음 순서대로 작성해주세요. 1. (미적 체험) 2. (표현) 3. (감상). 각 목표는 '~할 수 있다.' 형식이어야 합니다.`;
-                    await callGeminiAPI(prompt, suggestObjectivesSpinner, suggestedObjectivesOutput, suggestObjectivesBtn);
-                });
-            }
-
-            // Step 3 Activity Management
-            const activityIntroInput = document.getElementById('activity-intro');
-            const mainActivitiesContainer = document.getElementById('main-activities-container');
-            const addMainActivityBtn = document.getElementById('add-main-activity-btn');
-            const activityWrapupInput = document.getElementById('activity-wrapup');
-            const recordedExperienceInput = document.getElementById('recorded-experience-input');
-
-            // Resource table inputs
-            const resourceHumanInput = document.getElementById('resource-human');
-            const resourceMaterialInput = document.getElementById('resource-material');
-            const resourceInfoCultureInput = document.getElementById('resource-info-culture');
-
-            // Dynamic '전개' textareas management
-            function renderMainActivities() {
-                mainActivitiesContainer.innerHTML = ''; // Clear existing fields
-                if (activityData.mainActivities.length === 0) {
-                    activityData.mainActivities.push({ content: '' }); // Ensure at least one
-                }
-                activityData.mainActivities.forEach((item, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'main-activity-item space-y-2';
-                    div.innerHTML = `
-                        <label for="activity-main-${index}" class="block text-gray-700 text-sm font-bold mb-2 mt-4">전개 (${index + 1}):</label>
-                        <textarea id="activity-main-${index}" class="form-input" rows="8" placeholder="전개 (핵심 탐구 및 표현 활동...)"></textarea>
-                        ${index > 0 ? `<button type="button" class="remove-main-activity-btn mt-2 bg-red-200 hover:bg-red-300 text-red-800 font-bold py-1 px-3 rounded-lg text-sm">(-) 칸 삭제</button>` : ''}
-                    `;
-                    mainActivitiesContainer.appendChild(div);
-                    const newTextarea = document.getElementById(`activity-main-${index}`);
-                    newTextarea.value = item.content;
-                    newTextarea.addEventListener('input', (e) => {
-                        activityData.mainActivities[index].content = e.target.value;
-                    });
-                });
-                // Add event listeners for new remove buttons
-                document.querySelectorAll('.remove-main-activity-btn').forEach(btn => {
-                    btn.onclick = (e) => {
-                        const indexToRemove = parseInt(e.target.previousElementSibling.id.split('-')[2]);
-                        activityData.mainActivities.splice(indexToRemove, 1);
-                        renderMainActivities(); // Re-render to update numbers and buttons
-                    };
-                });
-            }
-
-            addMainActivityBtn.addEventListener('click', () => {
-                activityData.mainActivities.push({ content: '' });
-                renderMainActivities();
-            });
-
-            function saveActivityInputs() {
-                // Ensure elements exist before trying to access their value
-                activityData.intro = activityIntroInput ? activityIntroInput.value : '';
-                activityData.wrapup = activityWrapupInput ? activityWrapupInput.value : '';
-                activityData.recordedExperience = recordedExperienceInput ? recordedExperienceInput.value : '';
-                
-                // Save resource table data
-                activityData.resourceTable.human = resourceHumanInput ? resourceHumanInput.value : '';
-                activityData.resourceTable.material = resourceMaterialInput ? resourceMaterialInput.value : '';
-                activityData.resourceTable.infoCulture = resourceInfoCultureInput ? resourceInfoCultureInput.value : '';
-
-                // Save dynamic main activities content (already handled by input event listener, but ensure consistency)
-                activityData.mainActivities = [];
-                document.querySelectorAll('[id^="activity-main-"]').forEach(textarea => {
-                    activityData.mainActivities.push({ content: textarea.value });
-                });
-            }
-
-            function loadActivityContent() {
-                // Get element references inside the function for robustness
-                const activityIntroInputEl = document.getElementById('activity-intro');
-                const activityWrapupInputEl = document.getElementById('activity-wrapup');
-                const recordedExperienceInputEl = document.getElementById('recorded-experience-input');
-                const resourceHumanInputEl = document.getElementById('resource-human');
-                const resourceMaterialInputEl = document.getElementById('resource-material');
-                const resourceInfoCultureInputEl = document.getElementById('resource-info-culture');
-
-                if (activityIntroInputEl) activityIntroInputEl.value = activityData.intro;
-                if (activityWrapupInputEl) activityWrapupInputEl.value = activityData.wrapup;
-                if (recordedExperienceInputEl) recordedExperienceInputEl.value = activityData.recordedExperience || '';
-                
-                if (resourceHumanInputEl) resourceHumanInputEl.value = activityData.resourceTable.human || '';
-                if (resourceMaterialInputEl) resourceMaterialInputEl.value = activityData.resourceTable.material || '';
-                if (resourceInfoCultureInputEl) resourceInfoCultureInputEl.value = activityData.resourceTable.infoCulture || '';
-
-                // Load dynamic main activities content
-                renderMainActivities(); // Call render to load saved content
-            }
-
-            // Gemini API Integration - Expand Learning Activity
-            const expandLearningActivityBtn = document.getElementById('expand-learning-activity-btn');
-            const expandedLearningActivityOutput = document.getElementById('expanded-learning-activity-output');
-            const expandLearningActivitySpinner = expandLearningActivityBtn ? expandLearningActivityBtn.querySelector('.loading-spinner') : null;
-
-            if (expandLearningActivityBtn) {
-                expandLearningActivityBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
-                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
-                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
-                    
-                    const intro = document.getElementById('activity-intro').value.trim();
-                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
-                    const wrapup = document.getElementById('activity-wrapup').value.trim();
-                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
-
-                    if (!grade || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
-                        expandedLearningActivityOutput.classList.remove('hidden');
-                        expandedLearningActivityOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 현재 활동 내용은 다음과 같습니다: 도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}. 이 내용을 바탕으로 수업의 '전개' 부분에 들어갈 수 있는 구체적이고 다양한 학습 활동 아이디어를 3가지 번호 매겨 제안해주세요. 각 아이디어는 활동명과 간단한 설명을 포함하며, 학생들의 참여를 유도할 수 있는 창의적인 방안을 포함해야 합니다.`;
-                    await callGeminiAPI(prompt, expandLearningActivitySpinner, expandedLearningActivityOutput, expandLearningActivityBtn);
-                });
-            }
-
-            // Gemini API Integration - Expand Experience (Step 3)
-            const expandExperienceBtn = document.getElementById('expand-experience-btn');
-            const expandedExperienceOutput = document.getElementById('expanded-experience-output');
-            const expandExperienceSpinner = expandExperienceBtn ? expandExperienceBtn.querySelector('.loading-spinner') : null;
-
-            if (expandExperienceBtn) { 
-                expandExperienceBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
-                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
-                    const intro = document.getElementById('activity-intro').value.trim();
-                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
-                    const wrapup = document.getElementById('activity-wrapup').value.trim();
-                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
-                    const resource = resourceInput ? resourceInput.value.trim() : '';
-
-                    if (!grade || !resource || !curriculumTopic || (!intro && !mainContents && !wrapup)) {
-                        expandedExperienceOutput.classList.remove('hidden');
-                        expandedExperienceOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 활동 내용을 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 활동 내용은 다음과 같습니다: ${activitySummary}. 이 활동 내용을 기반으로 해당 지역에서 실제로 존재할 가능성이 높고 현실적으로 실행 가능한 외부 체험 활동 아이디어를 2-3가지 번호 매겨 제안해주세요. 제안 시, 가상의 기관명만 포함하고 공식 홈페이지 링크는 제외해주세요. 추천할 기관이 없다면 추천하지 않아도 됩니다.`;
-                    await callGeminiAPI(prompt, expandExperienceSpinner, expandedExperienceOutput, expandExperienceBtn);
-                });
-            }
-
-            // Gemini API Integration - Suggest Resources
-            const suggestResourcesBtn = document.getElementById('suggest-resources-btn');
-            const suggestedResourcesOutput = document.getElementById('suggested-resources-output');
-            const suggestResourcesSpinner = suggestResourcesBtn ? suggestResourcesBtn.querySelector('.loading-spinner') : null;
-
-            if (suggestResourcesBtn) {
-                suggestResourcesBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
-                    const resource = resourceInput ? resourceInput.value.trim() : '';
-                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
-                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
-                    const intro = document.getElementById('activity-intro').value.trim();
-                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
-                    const wrapup = document.getElementById('activity-wrapup').value.trim();
-                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
-
-                    if (!grade || !resource || !curriculumTopic || !learningObjectives || (!intro && !mainContents && !wrapup)) {
-                        suggestedResourcesOutput.classList.remove('hidden');
-                        suggestedResourcesOutput.innerHTML = '<p class="text-red-600">학년, 동네 자원, 학습 주제, 학습 목표, 활동 내용을 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 '${resource}' 자원을 활용하여 '${curriculumTopic}' 주제로 미술 수업을 할 예정입니다. 학습 목표는 '${learningObjectives}' 이고, 활동 내용은 다음과 같습니다: ${activitySummary}. 이 수업과 연관해서 활용할 수 있는 인적 자원, 물적 자원, 정보/문화 자원을 각각 1-2가지씩 구체적으로 추천해주세요. 추천할 자원이 없다면 추천하지 않아도 됩니다.`;
-                    await callGeminiAPI(prompt, suggestResourcesSpinner, suggestedResourcesOutput, suggestResourcesBtn);
-                });
-            }
-
-            // Gemini API Integration - Suggest Expansion Plan
-            const suggestExpansionPlanBtn = document.getElementById('suggest-expansion-plan-btn');
-            const expansionPlanInput = document.getElementById('expansion-plan-input');
-            const suggestedExpansionPlanOutput = document.getElementById('suggested-expansion-plan-output');
-            const suggestExpansionPlanSpinner = suggestExpansionPlanBtn ? suggestExpansionPlanBtn.querySelector('.loading-spinner') : null;
-
-            if (suggestExpansionPlanBtn) {
-                suggestExpansionPlanBtn.addEventListener('click', async () => {
-                    const grade = gradeSelect ? gradeSelect.value.trim() : '';
-                    const curriculumTopic = curriculumInput ? curriculumInput.value.trim() : '';
-                    const learningObjectives = learningObjectivesInput ? learningObjectivesInput.value.trim() : '';
-                    const effectInput = document.getElementById('effect-input');
-                    const expectedEffect = effectInput ? effectInput.value.trim() : '';
-                    
-                    const intro = document.getElementById('activity-intro').value.trim();
-                    const mainContents = activityData.mainActivities.map(item => item.content.trim()).filter(content => content !== '').join('\n\n');
-                    const wrapup = document.getElementById('activity-wrapup').value.trim();
-                    const activitySummary = `도입: ${intro}, 전개: ${mainContents}, 정리: ${wrapup}`;
-
-                    if (!grade || !curriculumTopic || !learningObjectives || !expectedEffect || (!intro && !mainContents && !wrapup)) {
-                        suggestedExpansionPlanOutput.classList.remove('hidden');
-                        suggestedExpansionPlanOutput.innerHTML = '<p class="text-red-600">학년, 학습 주제, 학습 목표, 기대 효과, 활동 내용을 모두 입력해주세요.</p>';
-                        return;
-                    }
-
-                    const prompt = `초등학교 ${grade} 학생들이 '${curriculumTopic}' 주제로 진행한 미술 수업의 확장 방안을 2-3가지 번호 매겨 제안해주세요. 학습 목표는 '${learningObjectives}'이고, 주요 활동은 다음과 같습니다: ${activitySummary}. 기대 효과는 '${expectedEffect}' 입니다. 제안하는 확장 방안은 수업의 연속성, 심화 학습, 다른 교과 연계, 지역사회 기여 등을 고려해주세요.`;
-                    await callGeminiAPI(prompt, suggestExpansionPlanSpinner, suggestedExpansionPlanOutput, suggestExpansionPlanBtn);
-                });
-            }
-
-            // Initial rendering of one main activity field
-            renderMainActivities();
-
-            // Initial view update
-            updateWorkshopView();
-            
-            // 초기 API 상태 설정
-            updateApiStatus();
-        });
-    </script>
-</body>
-</html>
+                    const prompt = `초등학교 ${grade} 
